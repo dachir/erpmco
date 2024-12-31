@@ -129,9 +129,14 @@ app_license = "mit"
 # ---------------
 # Override standard doctype classes
 
-# override_doctype_class = {
-# 	"ToDo": "custom_app.overrides.CustomToDo"
-# }
+override_doctype_class = {
+    "Purchase Receipt": "erpmco.overrides.purchase_receipt.CustomPurchaseReceipt",
+    "Work Order": "erpmco.overrides.work_order.CustomWorkOrder",
+    "Stock Entry": "erpmco.overrides.stock_entry.CustomStockEntry",
+    "Sales Order": "erpmco.overrides.sales_order.CustomSalesOrder",
+    "Material Request": "erpmco.overrides.material_request.CustomMaterialRequest",
+    #"BOM": "erpmco.overrides.stock_entry.CustomStockEntry",
+}
 
 # Document Events
 # ---------------
@@ -148,7 +153,15 @@ app_license = "mit"
 # Scheduled Tasks
 # ---------------
 
-# scheduler_events = {
+scheduler_events = {
+    "cron": {
+        "*/1 * * * *": [
+            "erpmco.utils.purchase_receipt.process_unreconciled_purchase_receipts"
+        ],
+        "*/10 * * * *": [
+            "erpmco.erpmco.doctype.allocation.allocation.process_shortages"
+        ],
+    },
 # 	"all": [
 # 		"erpmco.tasks.all"
 # 	],
@@ -164,7 +177,7 @@ app_license = "mit"
 # 	"monthly": [
 # 		"erpmco.tasks.monthly"
 # 	],
-# }
+}
 
 # Testing
 # -------
@@ -242,3 +255,8 @@ app_license = "mit"
 # 	"Logging DocType Name": 30  # days to retain logs
 # }
 
+fixtures = [
+    {"dt": "Custom Field", "filters": [["module", "=", "Erpmco"]]},
+    {"dt": "Client Script", "filters": [["enabled", "=", 1],["module", "=", "Erpmco"]]},
+    {"dt": "Server Script", "filters": [["disabled", "=", 0],["module", "=", "Erpmco"]]},
+]

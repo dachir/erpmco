@@ -1,0 +1,21 @@
+[
+ {
+  "allow_guest": 0,
+  "api_method": null,
+  "cron_format": null,
+  "disabled": 0,
+  "docstatus": 0,
+  "doctype": "Server Script",
+  "doctype_event": "Before Insert",
+  "enable_rate_limit": 0,
+  "event_frequency": "All",
+  "modified": "2024-12-31 17:26:54.253769",
+  "module": "Erpmco",
+  "name": "BOM Validate if Item is Linked to BOM",
+  "rate_limit_count": 5,
+  "rate_limit_seconds": 86400,
+  "reference_doctype": "Stock Entry",
+  "script": "for i in doc.items:\n    if i.has_bom == 1 and i.bom_no == None:\n        frappe.throw(f\"Validate item {i.item_code} BOM before validating the current one\")",
+  "script_type": "DocType Event"
+ }
+]

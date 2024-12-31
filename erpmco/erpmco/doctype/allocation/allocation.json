@@ -1,0 +1,176 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "naming_series:",
+ "creation": "2024-12-18 09:28:27.694615",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "company",
+  "branch",
+  "shipment_date",
+  "naming_series",
+  "column_break_lpnw",
+  "customer",
+  "sales_order",
+  "item",
+  "parameters_section",
+  "allocate_partially",
+  "generate_shortages",
+  "column_break_gnof",
+  "include_customer_allocations",
+  "include_lines_fully_allocated",
+  "column_break_wxgo",
+  "column_break_gysh",
+  "section_break_qhzk",
+  "details",
+  "section_break_dyff",
+  "amended_from"
+ ],
+ "fields": [
+  {
+   "fieldname": "section_break_dyff",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "Allocation",
+   "print_hide": 1,
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Company",
+   "options": "Company",
+   "reqd": 1
+  },
+  {
+   "fieldname": "shipment_date",
+   "fieldtype": "Date",
+   "label": "Shipment Date"
+  },
+  {
+   "fieldname": "column_break_lpnw",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "branch",
+   "fieldtype": "Link",
+   "label": "Branch",
+   "options": "Branch"
+  },
+  {
+   "fieldname": "parameters_section",
+   "fieldtype": "Section Break",
+   "label": "Parameters"
+  },
+  {
+   "default": "1",
+   "fieldname": "allocate_partially",
+   "fieldtype": "Check",
+   "label": "Allocate partially"
+  },
+  {
+   "default": "1",
+   "fieldname": "generate_shortages",
+   "fieldtype": "Check",
+   "label": "Generate shortages"
+  },
+  {
+   "fieldname": "column_break_gnof",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "1",
+   "fieldname": "include_customer_allocations",
+   "fieldtype": "Check",
+   "label": "Include customer allocations"
+  },
+  {
+   "default": "1",
+   "fieldname": "include_lines_fully_allocated",
+   "fieldtype": "Check",
+   "label": "Include lines fully allocated"
+  },
+  {
+   "fieldname": "column_break_wxgo",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "column_break_gysh",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "section_break_qhzk",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "details",
+   "fieldtype": "Table",
+   "label": "Details",
+   "options": "Allocation Detail"
+  },
+  {
+   "fieldname": "customer",
+   "fieldtype": "Link",
+   "label": "Customer",
+   "options": "Customer"
+  },
+  {
+   "fieldname": "item",
+   "fieldtype": "Link",
+   "label": "Item",
+   "options": "Item"
+  },
+  {
+   "default": "YY.ALL.MM.",
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "hidden": 1,
+   "label": "Series",
+   "no_copy": 1,
+   "options": "YY.ALL.MM.",
+   "reqd": 1,
+   "set_only_once": 1
+  },
+  {
+   "fieldname": "sales_order",
+   "fieldtype": "Link",
+   "label": "Sales Order",
+   "options": "Sales Order"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "is_submittable": 1,
+ "links": [],
+ "modified": "2024-12-21 12:50:41.382983",
+ "modified_by": "Administrator",
+ "module": "Erpmco",
+ "name": "Allocation",
+ "naming_rule": "By \"Naming Series\" field",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

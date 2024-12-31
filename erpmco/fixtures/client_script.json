@@ -1,0 +1,35 @@
+[
+ {
+  "docstatus": 0,
+  "doctype": "Client Script",
+  "dt": "Work Order",
+  "enabled": 1,
+  "modified": "2024-12-12 13:10:22.140202",
+  "module": "Erpmco",
+  "name": "Work Order Get Stock Quantity",
+  "script": "frappe.ui.form.on('Work Order', {\r\n    production_item: function (frm) {\r\n        // Fetch the item group for the selected production_item and set custom_manufacture_uom\r\n        if (frm.doc.production_item) {\r\n            frappe.db.get_value('Item', frm.doc.production_item, 'item_group', (r) => {\r\n                if (r && r.item_group) {\r\n                    // Check if the item group is \"FG\"\r\n                    if (r.item_group === 'FG') {\r\n                        frm.set_value('custom_manufacture_uom', 'CT'); // Set to \"CT\" for FG\r\n                    } else {\r\n                        // Set to stock_uom for other item groups\r\n                        frappe.db.get_value('Item', frm.doc.production_item, 'stock_uom', (uom) => {\r\n                            if (uom && uom.stock_uom) {\r\n                                frm.set_value('custom_manufacture_uom', uom.stock_uom);\r\n                            }\r\n                        });\r\n                    }\r\n                }\r\n            });\r\n        }\r\n    },\r\n    custom_qty_manufacture_: function (frm) {\r\n        if (frm.doc.custom_qty_manufacture_ && frm.doc.custom_manufacture_uom && frm.doc.production_item) {\r\n            frappe.call({\r\n                method: 'erpmco.overrides.work_order.get_converted_qty',\r\n                args: {\r\n                    item_code: frm.doc.production_item,\r\n                    uom: frm.doc.custom_manufacture_uom,\r\n                    qty: frm.doc.custom_qty_manufacture_\r\n                },\r\n                callback: function (r) {\r\n                    if (r.message) {\r\n                        frm.set_value('qty', r.message); // Set the converted qty\r\n                    }\r\n                }\r\n            });\r\n        }\r\n    }\r\n});\r\n",
+  "view": "Form"
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Client Script",
+  "dt": "Stock Entry",
+  "enabled": 1,
+  "modified": "2024-12-15 04:49:16.176329",
+  "module": "Erpmco",
+  "name": "Stock Entry Set Weight",
+  "script": "frappe.ui.form.on('Stock Entry', {\n\trefresh(frm) {\n\t\t// your code here\n\t}\n});\nfrappe.ui.form.on('Stock Entry Detail', {\n    item_code: function(frm, cdt, cdn) {\n        let row = locals[cdt][cdn];\n        if (row.item_code) {\n            frappe.db.get_doc('Item', row.item_code)\n                .then(item_doc => {\n                    row.custom_weight_per_unit = item_doc.weight_per_unit;\n                    row.custom_weight_uom = item_doc.custom_weight_uom;\n                });\n        }\n    }\n});",
+  "view": "Form"
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Client Script",
+  "dt": "Work Order",
+  "enabled": 1,
+  "modified": "2024-12-31 16:43:46.522473",
+  "module": "Erpmco",
+  "name": "Work Order Fetch Operations",
+  "script": "frappe.ui.form.on('Work Order', {\n\tcustom_routing_name: function (frm) {\n        if (frm.doc.custom_routing_name) {\n            frappe.call({\n                method: \"erpmco.overrides.work_order.fetch_operations\",\n                args: {\n                    routing_name: frm.doc.custom_routing_name\n                },\n                callback: function (r) {\n                    if (r.message) {\n                        frm.clear_table(\"operations\");\n                        r.message.forEach((row) => {\n                            let child = frm.add_child(\"operations\");\n                            child.operation = row.operation;\n                            child.workstation = row.workstation;\n                            child.time_in_mins = row.time_in_mins * frm.doc.qty;\n                            child.bom = frm.doc.bom_no;\n                        });\n                        frm.refresh_field(\"operations\");\n                    }\n                }\n            });\n        }\n    }\n})",
+  "view": "Form"
+ }
+]

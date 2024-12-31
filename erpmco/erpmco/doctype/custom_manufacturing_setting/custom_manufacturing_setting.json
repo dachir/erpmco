@@ -1,0 +1,53 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2024-12-14 16:20:34.943238",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "scrap_in_incoming_cost",
+  "use_detail_addtional_cost",
+  "column_break_hvaf"
+ ],
+ "fields": [
+  {
+   "default": "0",
+   "fieldname": "scrap_in_incoming_cost",
+   "fieldtype": "Check",
+   "label": "Scrap in Incoming Cost"
+  },
+  {
+   "fieldname": "column_break_hvaf",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "use_detail_addtional_cost",
+   "fieldtype": "Check",
+   "label": "Use Detail Addtional Cost"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "issingle": 1,
+ "links": [],
+ "modified": "2024-12-16 13:00:55.039614",
+ "modified_by": "Administrator",
+ "module": "Erpmco",
+ "name": "Custom Manufacturing Setting",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}
