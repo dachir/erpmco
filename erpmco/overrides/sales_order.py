@@ -21,6 +21,7 @@ class CustomSalesOrder(SalesOrder):
             "sales_order": self.name,
         })
         allocation_entry.insert()
+        allocate8entry.populate_details()
         allocation_entry.submit()
             
 
