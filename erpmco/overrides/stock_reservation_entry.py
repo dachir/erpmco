@@ -85,55 +85,93 @@ def create_stock_reservation_entries_for_so_items(
             reserved_qty = min(qty_to_be_reserved, available_qty)
             qty_to_be_reserved -= reserved_qty
 
-            sre = frappe.new_doc("Stock Reservation Entry")
-            sre.item_code = item.item_code
-            sre.warehouse = warehouse
-            sre.voucher_type = sales_order.doctype
-            sre.voucher_no = sales_order.name
-            sre.voucher_detail_no = item.name
-            sre.available_qty = available_qty
-            sre.voucher_qty = item.stock_qty
-            sre.reserved_qty = reserved_qty
-            sre.company = sales_order.company
-            sre.stock_uom = item.stock_uom
-            sre.project = sales_order.project
+            #sre = frappe.new_doc("Stock Reservation Entry")
+            #sre.item_code = item.item_code
+            #sre.warehouse = warehouse
+            #sre.voucher_type = sales_order.doctype
+            #sre.voucher_no = sales_order.name
+            #sre.voucher_detail_no = item.name
+            #sre.available_qty = available_qty
+            #sre.voucher_qty = item.stock_qty
+            #sre.reserved_qty = reserved_qty
+            #sre.company = sales_order.company
+            #sre.stock_uom = item.stock_uom
+            #sre.project = sales_order.project
+
+            args = frappe._dict({
+                "doctype": "Stock Reservation Entry",
+                "item_code": item.item_code,
+                "warehouse": warehouse,
+                "voucher_type": sales_order.doctype,
+                "voucher_no": sales_order.name,
+                "voucher_detail_no": item.name,
+                "available_qty": available_qty,
+                "voucher_qty": item.stock_qty,
+                "reserved_qty": reserved_qty,
+                "company": sales_order.company,
+                "stock_uom": item.stock_uom,
+                "project": sales_order.project,
+            })
 
             if from_voucher_type:
-                sre.from_voucher_type = from_voucher_type
-                sre.from_voucher_no = item.from_voucher_no
-                sre.from_voucher_detail_no = item.from_voucher_detail_no
+                args.update({
+                    "from_voucher_type":from_voucher_type,
+                    "from_voucher_no": item.from_voucher_no,
+                    "from_voucher_detail_no": item.from_voucher_detail_no
+                })
+                #sre.from_voucher_type = from_voucher_type
+                #sre.from_voucher_no = item.from_voucher_no
+                #sre.from_voucher_detail_no = item.from_voucher_detail_no
 
             # Serial and Batch Handling
-            if item.get("serial_and_batch_bundle"):
-                sbb = frappe.get_doc("Serial and Batch Bundle", item.serial_and_batch_bundle)
-                sre.reservation_based_on = "Serial and Batch"
+            #sre.reservation_based_on = "Serial and Batch"
+            sbb_entries = frappe.db.sql(
+                """
+                SELECT sbe.serial_no, sbe.batch_no, sbe.qty- IFNULL(r.qty,0) As qty, sbe.warehouse
+                FROM `tabSerial and Batch Bundle` sbb INNER JOIN `tabSerial and Batch Entry` sbe ON sbe.parent = sbb.name
+                LEFT JOIN (
+                    SELECT sbe1.batch_no, SUM(sbe1.qty) AS qty
+                    FROM `tabSerial and Batch Entry` sbe1 INNER JOIN `tabStock Reservation Entry` sre ON sbe1.parent = sre.name
+                    GROUP BY sbe1.batch_no
+                    ) AS r ON r.batch_no = sbe.batch_no AND r.qty < sbe.qty
+                WHERE sbb.item_code = %s AND sbb.type_of_transaction = 'Inward' AND sbb.docstatus = 1 
+                """, (item.item_code), as_dict=1
+            )
 
-                index, picked_qty = 0, 0
-                sbb_entries = frappe.get_all(
-                    "Serial and Batch Bundle Entry",
-                    filters={"warehouse": warehouse, "item_code": item.item_code},
-                    fields=["serial_no", "batch_no", "qty"]
+            sb_entries = []
+            
+            index, picked_qty = 0, 0
+
+            while index < len(sbb_entries) and picked_qty < reserved_qty:
+                entry = sbb_entries[index]
+                
+                qty = 1 if frappe.get_cached_value("Item", item.item_code, "has_serial_no") else min(
+                    abs(entry.qty), reserved_qty - picked_qty
+                )
+                sb_entries.append(
+                    {
+                        "serial_no": entry.serial_no,
+                        "batch_no": entry.batch_no,
+                        "qty": qty,
+                        "warehouse": entry.warehouse,
+                    }
                 )
 
-                while index < len(sbb_entries) and picked_qty < reserved_qty:
-                    entry = sbb_entries[index]
-                    qty = 1 if frappe.get_cached_value("Item", item.item_code, "has_serial_no") else min(
-                        abs(entry.qty), reserved_qty - picked_qty
-                    )
-
-                    sre.append(
-                        "sb_entries",
-                        {
-                            "serial_no": entry.serial_no,
-                            "batch_no": entry.batch_no,
-                            "qty": qty,
-                            "warehouse": entry.warehouse,
-                        },
-                    )
-
-                    index += 1
-                    picked_qty += qty
-
+                #sre.append(
+                #    "sb_entries",
+                #    {
+                #        "serial_no": entry.serial_no,
+                #        "batch_no": entry.batch_no,
+                #        "qty": qty,
+                #        "warehouse": entry.warehouse,
+                #    },
+                #)
+                #frappe.throw(str(sre.as_json()))
+                index += 1
+                picked_qty += qty
+            args.update({"sb_entries": sb_entries})
+            sre = frappe.get_doc(args)
+            sre.reservation_based_on = "Serial and Batch"
             sre.save()
             sre.submit()
 
