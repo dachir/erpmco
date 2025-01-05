@@ -4,9 +4,9 @@
 frappe.ui.form.on("Allocation", {
     refresh(frm) {
         frm.add_custom_button(__('Populate Details'), function() {
-            frm.call("populate_details").then(() => {
+            frm.call("populate_details")/*.then(() => {
                 frm.reload_doc();
-            });
+            });*/
         });
     },
 });
