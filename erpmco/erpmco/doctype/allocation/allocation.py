@@ -77,6 +77,7 @@ class Allocation(Document):
         for detail in self.details:
             # Fetch reserved quantity and calculate shortage
             reserved_qty = get_reservation_by_item(detail.sales_order, detail.so_item) /(detail.conversion_factor or 1)
+            #frappe.throw(str(reserved_qty))
             detail.qty_allocated = reserved_qty
 
             # Calculate the shortage
@@ -207,17 +208,20 @@ def process_shortages(item_code=None):
             fields=["name", "item_code", "warehouse", "shortage", "voucher_type", "voucher_no", "voucher_detail_no", "allocation", "allocation_detail", "conversion_factor"],
         )
 
+    #frappe.throw(str(shortages))
     for shortage in shortages:
         reserved_qty = get_reservation_by_item(shortage.voucher_no, shortage.voucher_detail_no)
         if reserved_qty == 0:
             shortage_clone = copy.deepcopy(shortage)
             shortage_clone.update({"qty_to_allocate": shortage.shortage, "so_item": shortage.voucher_detail_no})
             al_doc = frappe.get_doc("Allocation", shortage.allocation)
-            al_doc.create_reservation_entries(shortage.voucher_no, shortage_clone)
+            sales_order = frappe.get_doc("Sales Order", shortage.voucher_no,)
+            al_doc.create_reservation_entries(sales_order, shortage_clone)
 
             # Fetch reserved quantity and calculate shortage
             reserved_qty = get_reservation_by_item(shortage.voucher_no, shortage.voucher_detail_no)
             remaining_qty = shortage.shortage - reserved_qty
+            #frappe.throw(str(remaining_qty))
 
             if remaining_qty > 0:
                 frappe.db.set_value("Shortage", shortage.name, "shortage", remaining_qty)

@@ -56,10 +56,12 @@ def create_stock_reservation_entries_for_so_items(
 
         for warehouse in child_warehouses:
             available_qty = get_available_qty_to_reserve(item.item_code, warehouse)
+            #frappe.msgprint(str(available_qty))
             if available_qty > 0:
                 total_available_stock += available_qty
                 warehouse_stock_map[warehouse] = available_qty
 
+        #frappe.throw(str(child_warehouses))
         if total_available_stock <= 0:
             frappe.msgprint(
                 _("Row #{0}: No stock available to reserve for Item {1} in Warehouse {2}.").format(
@@ -111,6 +113,8 @@ def create_stock_reservation_entries_for_so_items(
                 "company": sales_order.company,
                 "stock_uom": item.stock_uom,
                 "project": sales_order.project,
+                "reservation_based_on": "Serial and Batch",
+                "has_batch_no": 1,
             })
 
             if from_voucher_type:
@@ -169,9 +173,11 @@ def create_stock_reservation_entries_for_so_items(
                 #frappe.throw(str(sre.as_json()))
                 index += 1
                 picked_qty += qty
+
+            
             args.update({"sb_entries": sb_entries})
             sre = frappe.get_doc(args)
-            sre.reservation_based_on = "Serial and Batch"
+            #sre.reservation_based_on = "Serial and Batch"
             sre.save()
             sre.submit()
 

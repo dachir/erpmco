@@ -133,6 +133,7 @@ override_doctype_class = {
     "Purchase Receipt": "erpmco.overrides.purchase_receipt.CustomPurchaseReceipt",
     "Work Order": "erpmco.overrides.work_order.CustomWorkOrder",
     "Stock Entry": "erpmco.overrides.stock_entry.CustomStockEntry",
+    "Stock Ledger Entry": "erpmco.overrides.stock_ledger_entry.CustomStockLedgerEntry",
     "Sales Order": "erpmco.overrides.sales_order.CustomSalesOrder",
     "Material Request": "erpmco.overrides.material_request.CustomMaterialRequest",
     #"Delivery Note": "erpmco.overrides.delivery_note.CustomDeliveryNote",
