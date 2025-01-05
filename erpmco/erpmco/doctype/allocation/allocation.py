@@ -168,6 +168,7 @@ class Allocation(Document):
                     "conversion_factor": so["conversion_factor"],
                 },
             )
+        self.save()
 
 
 def get_reservation_by_item(sale_order, detail_name):
