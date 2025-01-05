@@ -135,6 +135,7 @@ override_doctype_class = {
     "Stock Entry": "erpmco.overrides.stock_entry.CustomStockEntry",
     "Sales Order": "erpmco.overrides.sales_order.CustomSalesOrder",
     "Material Request": "erpmco.overrides.material_request.CustomMaterialRequest",
+    #"Delivery Note": "erpmco.overrides.delivery_note.CustomDeliveryNote",
     #"BOM": "erpmco.overrides.stock_entry.CustomStockEntry",
 }
 

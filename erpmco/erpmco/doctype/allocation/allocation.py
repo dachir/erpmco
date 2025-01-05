@@ -8,8 +8,8 @@ import copy
 
 
 class Allocation(Document):
-    def before_save(self):
-        self.populate_details()
+    #def before_save(self):
+    #    self.populate_details()
 
     def after_save(self):
         self.update_shortages()
@@ -105,6 +105,7 @@ class Allocation(Document):
         shortage.insert()
         shortage.submit()
 
+    @frappe.whitelist()
     def populate_details(self):
         """
         Populates the details table with relevant sales orders and their stock status.
