@@ -2,6 +2,7 @@ import frappe
 from erpnext.selling.doctype.sales_order.sales_order import SalesOrder
 
 class CustomSalesOrder(SalesOrder):
+    pass
 
     def on_submit(self):
         super().on_submit()
