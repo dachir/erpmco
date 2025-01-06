@@ -174,12 +174,12 @@ def create_stock_reservation_entries_for_so_items(
                 index += 1
                 picked_qty += qty
 
-            
-            args.update({"sb_entries": sb_entries})
-            sre = frappe.get_doc(args)
-            #sre.reservation_based_on = "Serial and Batch"
-            sre.save()
-            sre.submit()
+            if qty > 0:
+                args.update({"sb_entries": sb_entries})
+                sre = frappe.get_doc(args)
+                #sre.reservation_based_on = "Serial and Batch"
+                sre.save()
+                sre.submit()
 
             sre_count += 1
 
