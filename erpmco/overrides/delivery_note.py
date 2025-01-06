@@ -26,14 +26,15 @@ def fetch_reserved_batches(customer=None):
         WHERE 
             sbe.qty > sbe.delivered_qty 
             AND sre.docstatus = 1
+            AND  so.customer = %s
 
     """
-    result = frappe.db.sql(query, as_dict=True)
+    result = frappe.db.sql(query,customer, as_dict=True)
     return result
 
 
 
-        #               AND  so.customer = %s
+        #               
 
 
 

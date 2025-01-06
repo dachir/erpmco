@@ -3,8 +3,10 @@ from erpnext.stock.doctype.stock_ledger_entry.stock_ledger_entry import StockLed
 from erpmco.erpmco.doctype.allocation.allocation import process_shortages
 
 class CustomStockLedgerEntry(StockLedgerEntry):
+    pass
 
     def on_submit(self):
+        pass
         super().on_submit()
 
         # Check if the entry is an incoming stock
