@@ -3,6 +3,7 @@
 
 from frappe.model.document import Document
 import frappe
+from frappe import _
 from frappe.utils import flt
 import copy
 
@@ -19,53 +20,28 @@ class Allocation(Document):
         for detail in self.details:
             #if detail.qty_allocated > 0:
             sales_order = frappe.get_doc("Sales Order", detail.sales_order)
-            self.create_reservation_entries(sales_order, detail)
+            # Create reservation or shortage entries
+            create_stock_reservation_entries(
+                sales_order=sales_order, item=detail
+            )
 
-            # Update shortages on submit as well
-            self.update_shortages()
-            if detail.shortage > 0:
-                shortages = frappe.get_list(
-                    "Shortage",
-                    filters={"docstatus": 1, "voucher_no": detail.sales_order, "voucher_detail_no":detail.so_item,},
-                    fields=["name"],
-                )
-                for sh in shortages:
-                    doc = frappe.get_doc("Shortage", sh.name)
-                    doc.cancel()
-
-                self.create_shortage_entry(
-                    item_code=detail.item_code,
-                    warehouse=detail.warehouse,
-                    shortage_qty=detail.shortage,
-                    voucher_type="Sales Order",
-                    voucher_no=detail.sales_order,
-                    voucher_detail_no=detail.so_item,
-                    allocation=self.name,
-                    allocation_detail = detail.name,
-                    conversion_factor = detail.conversion_factor,
-                )
+            
 
     def create_reservation_entries(self, sales_order, detail):
-        """
-        Creates Stock Reservation Entries for the sales order items in the allocation.
-        """
-        from erpmco.overrides.stock_reservation_entry import (
-            create_stock_reservation_entries_for_so_items as create_stock_reservation_entries,
-        )
-
         # Prepare item details for reservation
-        item_details = [
-            {
+        item= {
                 "item_code": detail.item_code,
                 "warehouse": detail.warehouse,
                 "qty_to_reserve": detail.qty_to_allocate,
                 "sales_order_item": detail.so_item,
+                "allocation": detail.parent,
+                "allocation_detail": detail.name,
+                "conversion_factor": detail.conversion_factor,
             }
-        ]
 
         # Create reservation entries
         create_stock_reservation_entries(
-            sales_order=sales_order, items_details=item_details
+            sales_order=sales_order, item=item
         )
 
 
@@ -129,7 +105,8 @@ class Allocation(Document):
                 conversion_factor
             FROM `tabSales Order` so
             INNER JOIN `tabSales Order Item` soi ON soi.parent = so.name
-            WHERE so.docstatus = 1 AND so.company = %(company)s AND so.branch LIKE %(branch)s AND so.customer LIKE %(customer)s
+            WHERE so.docstatus = 1 AND (soi.qty - (soi.stock_reserved_qty  + soi.delivered_qty) / conversion_factor) > 0
+                AND so.company = %(company)s AND so.branch LIKE %(branch)s AND so.customer LIKE %(customer)s
                 AND soi.item_code LIKE %(item_code)s AND so.name LIKE %(sales_order)s
         """
 
@@ -232,4 +209,131 @@ def process_shortages(item_code=None):
 
             frappe.db.set_value("Allocation Detail", shortage.allocation_detail, "shortage", remaining_qty)
             frappe.db.set_value("Allocation Detail", shortage.allocation_detail, "qty_allocated", reserved_qty)
+
+
+######################################################################################################################
+def get_available_stock_by_status(item_code, warehouse, status="A"):
+    result =  frappe.db.sql(
+            """
+            SELECT s.item_code, s.warehouse, i.stock_uom, s.quality_status, sum(s.actual_qty) AS actual_qty
+            FROM `tabStock Ledger Entry` s INNER JOIN `tabItem` i ON s.item_code = i.item_code
+            WHERE s.posting_date <= CURDATE() AND i.name = %s AND s.quality_status = %s AND  s.warehouse = %s
+            GROUP BY s.item_code, s.warehouse, s.quality_status
+            ORDER BY s.item_code, s.warehouse, s.quality_status
+            """,(item_code, status, warehouse), as_dict=1
+        )
+    return result
+
+def create_stock_reservation_entries(
+    sales_order: object,
+    item: dict | None = None,
+    #from_voucher_type: Literal["Pick List", "Purchase Receipt"] = None,
+    notify=True,
+) -> None:
+    """Creates Stock Reservation Entries for Sales Order Items."""
+    from frappe.utils.nestedset import get_descendants_of
+
+    # Check if the warehouse is a parent
+    is_group = frappe.get_cached_value("Warehouse", item.warehouse, "is_group")
+    child_warehouses = (
+        get_descendants_of("Warehouse", item.warehouse) if is_group else [item.warehouse]
+    )
+
+    # Aggregate available stock across child warehouses
+    total_available_stock = 0
+    warehouse_stock_map = {}
+    sre_count = 0
+
+    for warehouse in child_warehouses:
+        warehouse_stock = get_available_stock_by_status(item.item_code, warehouse)
+        for s in warehouse_stock:
+            available_qty = s.actual_qty or 0
+            if available_qty > 0:
+                total_available_stock += available_qty
+                warehouse_stock_map[warehouse] = available_qty
+
+    if total_available_stock <= 0:
+        frappe.msgprint(
+            _("Row #{0}: No stock available to reserve for Item {1} in Warehouse {2}.").format(
+                item.idx, frappe.bold(item.item_code), frappe.bold(item.warehouse)
+            ),
+            title=_("Stock Reservation"),
+            indicator="orange",
+        )
+
+    # Distribute reservation across child warehouses
+    qty_to_be_reserved = flt(item.qty_to_allocate * item.conversion_factor,9) or 0
+    for warehouse, available_qty in warehouse_stock_map.items():
+        #frappe.throw(str(warehouse_stock_map))
+        if qty_to_be_reserved <= 0:
+            break
+
+        reserved_qty = min(qty_to_be_reserved, available_qty)
+        qty_to_be_reserved -= reserved_qty
+
+        args = frappe._dict({
+            "doctype": "Stock Reservation Entry",
+            "item_code": item.item_code,
+            "warehouse": warehouse,
+            "voucher_type": sales_order.doctype,
+            "voucher_no": sales_order.name,
+            "voucher_detail_no": item.name,
+            "available_qty": available_qty,
+            "voucher_qty": flt(item.qty_to_allocate * item.conversion_factor,9),
+            "reserved_qty": reserved_qty,
+            "company": sales_order.company,
+            "stock_uom": frappe.db.get_value("Item", item.item_code, "stock_uom"),
+            "project": sales_order.project,
+            "reservation_based_on": "Serial and Batch",
+            "has_batch_no": 1,
+        })
+
+        # Serial and Batch Handling
+        sbb_entries = frappe.db.sql(
+            """
+            SELECT sbe.serial_no, sbe.batch_no, sbe.qty- IFNULL(r.qty,0) As qty, sbe.warehouse
+            FROM `tabSerial and Batch Bundle` sbb INNER JOIN `tabSerial and Batch Entry` sbe ON sbe.parent = sbb.name
+                INNER JOIN `tabStock Ledger Entry` sle ON sle.serial_and_batch_bundle = sbb.name
+                LEFT JOIN (
+                    SELECT sbe1.batch_no, SUM(sbe1.qty) AS qty
+                    FROM `tabSerial and Batch Entry` sbe1 INNER JOIN `tabStock Reservation Entry` sre ON sbe1.parent = sre.name
+                    GROUP BY sbe1.batch_no
+                    ) AS r ON r.batch_no = sbe.batch_no AND r.qty < sbe.qty
+            WHERE sbb.item_code = %s AND sbb.type_of_transaction = 'Inward' AND sbb.docstatus = 1 AND sle.quality_status = 'A'
+            """, (item.item_code), as_dict=1
+        )
+
+        sb_entries = []
+        
+        index, picked_qty = 0, 0
+
+        while index < len(sbb_entries) and picked_qty < reserved_qty:
+            entry = sbb_entries[index]
+            
+            qty = 1 if frappe.get_cached_value("Item", item.item_code, "has_serial_no") else min(
+                abs(entry.qty), reserved_qty - picked_qty
+            )
+            sb_entries.append(
+                {
+                    "serial_no": entry.serial_no,
+                    "batch_no": entry.batch_no,
+                    "qty": qty,
+                    "warehouse": entry.warehouse,
+                }
+            )
+
+            index += 1
+            picked_qty += qty
+
+        if picked_qty > 0:
+            args.update({"sb_entries": sb_entries})
+            #frappe.throw(str(args))
+            sre = frappe.get_doc(args)
+            #sre.reservation_based_on = "Serial and Batch"
+            sre.save()
+            sre.submit()
+            sre_count += 1
+        
+    if sre_count and notify:
+        frappe.msgprint(_("Stock Reservation Entries Created"), alert=True, indicator="green")
 

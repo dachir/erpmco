@@ -1,14 +1,80 @@
 from erpnext.stock.doctype.stock_reservation_entry.stock_reservation_entry import (validate_stock_reservation_settings, get_sre_reserved_qty_details_for_voucher
-    , get_available_qty_to_reserve)
+    , get_available_qty_to_reserve, StockReservationEntry, get_sre_reserved_qty_for_voucher_detail_no, get_stock_balance)
 
 import frappe
 from frappe import _
 from frappe.utils import cint, flt
 from typing import Literal
 
-#class CustomStockReservationEntry(StockReservationEntry):
-#    pass
+class CustomStockReservationEntry(StockReservationEntry):
+    def validate_with_allowed_qty(self, qty_to_be_reserved: float) -> None:
+        """Validates `Reserved Qty` with `Max Reserved Qty`."""
 
+        self.db_set(
+            "available_qty",
+            get_available_qty_to_reserve(self.item_code, self.warehouse, ignore_sre=self.name),
+        )
+
+        total_reserved_qty = get_sre_reserved_qty_for_voucher_detail_no(
+            self.voucher_type, self.voucher_no, self.voucher_detail_no, ignore_sre=self.name
+        )
+
+        voucher_delivered_qty = 0
+        if self.voucher_type == "Sales Order":
+            delivered_qty = frappe.db.get_value("Sales Order Item", self.voucher_detail_no, "delivered_qty") or 0
+            conversion_factor = frappe.db.get_value("Sales Order Item", self.voucher_detail_no, "conversion_factor")
+            voucher_delivered_qty = flt(delivered_qty) * flt(conversion_factor)
+
+        allowed_qty = min(self.available_qty, (self.voucher_qty - voucher_delivered_qty - total_reserved_qty))
+
+        if self.get("_action") != "submit" and self.voucher_type == "Sales Order" and allowed_qty <= 0:
+            msg = _("Item {0} is already reserved/delivered against Sales Order {1}.").format(
+                frappe.bold(self.item_code), frappe.bold(self.voucher_no)
+            )
+
+            if self.docstatus == 1:
+                self.cancel()
+                return frappe.msgprint(msg)
+            else:
+                frappe.throw(msg)
+
+        if qty_to_be_reserved > allowed_qty:
+            actual_qty = get_stock_balance(self.item_code, self.warehouse)
+            msg = """
+                Cannot reserve more than Allowed Qty {} {} for Item {} against {} {}.<br /><br />
+                The <b>Allowed Qty</b> is calculated as follows:<br />
+                <ul>
+                    <li>Actual Qty [Available Qty at Warehouse] = {}</li>
+                    <li>Reserved Stock [Ignore current SRE] = {}</li>
+                    <li>Available Qty To Reserve [Actual Qty - Reserved Stock] = {}</li>
+                    <li>Voucher Qty [Voucher Item Qty] = {}</li>
+                    <li>Delivered Qty [Qty delivered against the Voucher Item] = {}</li>
+                    <li>Total Reserved Qty [Qty reserved against the Voucher Item] = {}</li>
+                    <li>Allowed Qty [Minimum of (Available Qty To Reserve, (Voucher Qty - Delivered Qty - Total Reserved Qty))] = {}</li>
+                </ul>
+            """.format(
+                frappe.bold(allowed_qty),
+                self.stock_uom,
+                frappe.bold(self.item_code),
+                self.voucher_type,
+                frappe.bold(self.voucher_no),
+                actual_qty,
+                actual_qty - self.available_qty,
+                self.available_qty,
+                self.voucher_qty,
+                voucher_delivered_qty,
+                total_reserved_qty,
+                allowed_qty,
+            )
+            frappe.throw(msg)
+
+        if qty_to_be_reserved <= self.delivered_qty:
+            msg = _("Reserved Qty should be greater than Delivered Qty.")
+            frappe.throw(msg)
+
+
+
+#########################################################################################################
 def create_stock_reservation_entries_for_so_items(
     sales_order: object,
     items_details: list[dict] | None = None,
