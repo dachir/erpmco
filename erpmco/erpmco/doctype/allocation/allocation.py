@@ -112,9 +112,7 @@ class Allocation(Document):
 
         # Adjust query based on filters
         if self.include_lines_fully_allocated:
-            query += """
-                AND (soi.qty = soi.stock_reserved_qty / conversion_factor OR soi.qty > (soi.stock_reserved_qty + soi.delivered_qty) / conversion_factor)
-            """
+            query += " AND (soi.qty = soi.stock_reserved_qty / conversion_factor OR soi.qty > (soi.stock_reserved_qty + soi.delivered_qty) / conversion_factor)"
         else:
             query += " AND soi.qty > (soi.stock_reserved_qty + soi.delivered_qty) / conversion_factor"
 
@@ -122,7 +120,7 @@ class Allocation(Document):
         item_code = self.item if self.item else "%"
         branch = self.branch if self.branch else "%"
         sales_order = self.sales_order if self.sales_order else "%"
-        
+        #frappe.throw(str(query))
         sales_orders = frappe.db.sql(query,{"company": self.company, "customer": customer,"item_code": item_code,"branch": branch,"sales_order": sales_order,}, as_dict=True)
 
         # Populate the child table
