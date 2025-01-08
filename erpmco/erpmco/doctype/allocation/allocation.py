@@ -277,13 +277,18 @@ def create_stock_reservation_entries(
             "voucher_no": sales_order.name,
             "voucher_detail_no": item.so_item,
             "available_qty": available_qty,
-            "voucher_qty": flt(item.qty_to_allocate * item.conversion_factor,9),
+            "voucher_qty": flt(item.qty * item.conversion_factor,9),
             "reserved_qty": reserved_qty,
             "company": sales_order.company,
             "stock_uom": frappe.db.get_value("Item", item.item_code, "stock_uom"),
             "project": sales_order.project,
             "reservation_based_on": "Serial and Batch",
             "has_batch_no": 1,
+            "custom_uom": item.uom,
+            "custom_conversion_factor": item.conversion_factor,
+            "custom_so_available_qty": flt(available_qty / item.conversion_factor,9),
+            "custom_so_voucher_qty": item.qty,
+            "custom_so_reserved_qty": flt(reserved_qty / item.conversion_factor,9),
         })
 
         # Serial and Batch Handling
