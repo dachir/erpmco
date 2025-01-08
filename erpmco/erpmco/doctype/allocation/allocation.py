@@ -269,6 +269,13 @@ def create_stock_reservation_entries(
         reserved_qty = min(qty_to_be_reserved, available_qty)
         qty_to_be_reserved -= reserved_qty
 
+        # Fetch additional item details from Sales Order Item
+        so_item_data = frappe.db.sql("""
+            SELECT *
+            FROM `tabSales Order Item`
+            WHERE name = %s
+        """, (item.so_item), as_dict=True)
+
         args = frappe._dict({
             "doctype": "Stock Reservation Entry",
             "item_code": item.item_code,
@@ -277,17 +284,17 @@ def create_stock_reservation_entries(
             "voucher_no": sales_order.name,
             "voucher_detail_no": item.so_item,
             "available_qty": available_qty,
-            "voucher_qty": flt(item.qty * item.conversion_factor,9),
+            "voucher_qty": so_item_data.qty,
             "reserved_qty": reserved_qty,
             "company": sales_order.company,
-            "stock_uom": frappe.db.get_value("Item", item.item_code, "stock_uom"),
+            "stock_uom": so_item_data.stock_uom,
             "project": sales_order.project,
             "reservation_based_on": "Serial and Batch",
             "has_batch_no": 1,
-            "custom_uom": item.uom,
+            "custom_uom": so_item_data.uom,
             "custom_conversion_factor": item.conversion_factor,
             "custom_so_available_qty": flt(available_qty / item.conversion_factor,9),
-            "custom_so_voucher_qty": item.qty,
+            "custom_so_voucher_qty": so_item_data.stock_qty,
             "custom_so_reserved_qty": flt(reserved_qty / item.conversion_factor,9),
         })
 
