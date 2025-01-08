@@ -275,7 +275,7 @@ def create_stock_reservation_entries(
             "warehouse": warehouse,
             "voucher_type": sales_order.doctype,
             "voucher_no": sales_order.name,
-            "voucher_detail_no": item.name,
+            "voucher_detail_no": item.so_item,
             "available_qty": available_qty,
             "voucher_qty": flt(item.qty_to_allocate * item.conversion_factor,9),
             "reserved_qty": reserved_qty,
