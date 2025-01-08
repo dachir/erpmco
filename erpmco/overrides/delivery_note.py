@@ -90,7 +90,8 @@ def fetch_reserved_stock(customer=None):
         FROM `tabStock Reservation Entry` sre INNER JOIN `tabSales Order` so ON so.name = sre.voucher_no
             INNER JOIN `tabSerial and Batch Entry` sbe ON sbe.parent = sre.name
         WHERE sre.reserved_qty > sre.delivered_qty AND sre.docstatus = 1 AND  so.customer = %s AND sre.status not in ("Delivered", "Cancelled") AND sre.voucher_type = 'Sales Order'
-        GROUP BY sre.item_code, sre.warehouse, sre.voucher_no, so.customer, sre.voucher_detail_no, sre.name, sre.custom_conversion_factor
+            AND so.status not in ("Delivered", "Cancelled", "Closed")
+        GROUP BY sre.item_code, sre.warehouse, sre.voucher_no, so.customer, sre.voucher_detail_no, sre.name, sre.custom_conversion_factor 
     """
     result = frappe.db.sql(query,customer, as_dict=True)
     return result

@@ -105,7 +105,8 @@ class Allocation(Document):
                 conversion_factor
             FROM `tabSales Order` so
             INNER JOIN `tabSales Order Item` soi ON soi.parent = so.name
-            WHERE so.docstatus = 1 AND (soi.qty - (soi.stock_reserved_qty  + soi.delivered_qty) / conversion_factor) > 0
+            WHERE so.docstatus = 1 AND (soi.qty - (soi.stock_reserved_qty  + soi.delivered_qty) / conversion_factor) > 0 
+                AND so.status not in ("Fully Delivered", "Closed", "Not Applicable")
                 AND so.company = %(company)s AND so.branch LIKE %(branch)s AND so.customer LIKE %(customer)s
                 AND soi.item_code LIKE %(item_code)s AND so.name LIKE %(sales_order)s
         """
