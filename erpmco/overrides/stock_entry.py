@@ -7,6 +7,7 @@ import erpnext
 from erpnext.stock.doctype.stock_entry.stock_entry import StockEntry
 from erpnext.stock.stock_ledger import NegativeStockError, get_previous_sle, get_valuation_rate
 from erpmco.overrides.bom import add_additional_cost2
+from erpnext.manufacturing.doctype.bom.bom import get_op_cost_from_sub_assemblies
 from frappe.utils import (
     cint,
     comma_or,
