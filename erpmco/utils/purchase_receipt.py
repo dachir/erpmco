@@ -59,4 +59,4 @@ def process_unreconciled_purchase_receipts():
         frappe.db.commit()
 
         # Log the processing for debugging
-        frappe.log_error(f"Stock Reconciliation created for Purchase Receipt: {pr_doc.name}", "Stock Reconciliation Created")
+        #frappe.log_error(f"Stock Reconciliation created for Purchase Receipt: {pr_doc.name}", "Stock Reconciliation Created")
