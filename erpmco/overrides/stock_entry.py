@@ -399,6 +399,6 @@ def get_operating_cost_per_unit(work_order=None, bom_no=None):
 
             #frappe.throw(str(costs_dict))
 
-    return operating_cost_per_unit if not bool(use_detail_addtional_cost) else costs_dict
+    return flt(operating_cost_per_unit,9) if not bool(use_detail_addtional_cost) else costs_dict
 
 

@@ -28,7 +28,7 @@ def add_operations_cost2(stock_entry, work_order=None, expense_account=None):
 
     operating_cost_per_unit = get_operating_cost_per_unit(work_order, stock_entry.bom_no)
 
-    if not isinstance(operating_cost_per_unit, dict):
+    if isinstance(operating_cost_per_unit, float):
         if operating_cost_per_unit:
             stock_entry.append(
                 "additional_costs",
