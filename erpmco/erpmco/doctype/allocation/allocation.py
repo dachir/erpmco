@@ -6,6 +6,7 @@ import frappe
 from frappe import _
 from frappe.utils import flt
 import copy
+from erpnext.stock.doctype.stock_reservation_entry.stock_reservation_entry import cancel_stock_reservation_entries
 
 
 class Allocation(Document):
@@ -15,7 +16,8 @@ class Allocation(Document):
     def after_save(self):
         self.update_shortages()
 
-    def on_submit(self):
+    @frappe.whitelist()
+    def reserve_all(self):
         # Handle reservations and shortages for each detail
         warehouse_stock_map = {}
         for detail in self.details:
@@ -32,7 +34,7 @@ class Allocation(Document):
                 item=detail,
                 warehouse_stock_map=warehouse_stock_map,
             )
-
+        #frappe.throw("OK")
         for detail in self.details:
             frappe.cache.delete_value(detail.item_code) 
 
@@ -40,6 +42,49 @@ class Allocation(Document):
 
             
 
+    @frappe.whitelist()
+    def cancel_stock_reservation_entries(self, details=None) -> None:
+        """Cancel Stock Reservation Entries for Sales Order Items."""
+
+        from erpnext.stock.doctype.stock_reservation_entry.stock_reservation_entry import (
+            cancel_stock_reservation_entries,
+        )
+        branch = self.branch or "%" 
+        customer = self.customer or "%" 
+        #sales_order = self.sales_order or "%" 
+        #item = self.item or "%"
+
+        unique_orders = set()
+        if details != None:
+            for detail in details:
+                unique_orders.add((detail["sales_order"], detail["item_code"]))
+        else:
+            for detail in self.details:
+                unique_orders.add((detail.sales_order, detail.item_code))
+
+        #result = [{'order_id': order_id, 'items': item} for order_id, item in unique_orders]
+
+        for detail in unique_orders:
+            sre_entries = frappe.db.sql(
+                """
+                SELECT sre.name
+                FROM `tabStock Reservation Entry` sre INNER JOIN `tabSales Order` so ON sre.voucher_no = so.name AND sre.docstatus = so.docstatus
+                    INNER JOIN  `tabSales Order Item` soi ON sre.voucher_detail_no = soi.name
+                WHERE sre.status NOT IN ('Delivered', 'Cancelled') AND so.company = %(company)s AND so.branch LIKE %(branch)s AND so.customer LIKE %(customer)s 
+                    AND soi.item_code LIKE %(item)s AND so.name LIKE %(sales_order)s
+                """, {"company": self.company, "customer": customer, "sales_order":  detail[0], "branch": branch, "item": detail[1], }, as_dict=1
+            )
+            
+            for sre in sre_entries:
+                stock_reservation_entry = frappe.get_doc("Stock Reservation Entry", sre.name)
+                stock_reservation_entry.cancel()
+
+                al = frappe.get_doc("Allocation Detail", {"sales_order": stock_reservation_entry.voucher_no, "so_item": stock_reservation_entry.voucher_detail_no})
+                frappe.db.set_value("Allocation Detail", al.name, "qty_allocated",  flt(al.qty_allocated - flt(stock_reservation_entry.custom_so_reserved_qty),9))
+                frappe.db.set_value("Allocation Detail", al.name, "qty_to_allocate",  flt(al.qty_to_allocate +  flt(stock_reservation_entry.custom_so_reserved_qty),9))
+                frappe.db.set_value("Allocation Detail", al.name, "shortage", flt(al.qty_to_allocate +  flt(stock_reservation_entry.custom_so_reserved_qty),9))
+
+    
     def create_reservation_entries(self, sales_order, detail):
         # Prepare item details for reservation
         item= {
@@ -309,6 +354,18 @@ def create_stock_reservation_entries(
 
             while index < len(sbb_entries) and 0 < flt(control_qty,9):
                 entry = sbb_entries[index]
+
+                compteur = frappe.db.sql(
+                    """
+                    SELECT COUNT(sbe.batch_no)AS nb
+                    FROM `tabSerial and Batch Entry` sbe INNER JOIN `tabStock Reservation Entry` sre ON sbe.parent = sre.name
+                    WHERE sre.docstatus = 1 AND voucher_no = %(voucher_no)s AND voucher_detail_no =  %(voucher_detail_no)s AND sbe.batch_no =  %(batch_no)s
+                    """,{"voucher_no": sales_order.name, "voucher_detail_no": item.so_item, "batch_no": entry.batch_no}, as_dict=1
+                )
+
+                if compteur[0].nb:
+                    index += 1
+                    continue
                 
                 qty = 1 if frappe.get_cached_value("Item", item.item_code, "has_serial_no") else min(
                     abs(entry.qty), reserved_qty - picked_qty
@@ -364,7 +421,8 @@ def create_stock_reservation_entries(
             sre = frappe.get_doc(args)
             sre.save()
             sre.submit()
-            frappe.db.set_value("Allocation Detail", item.name, "qty_to_allocate",  flt(reserved_qty / item.conversion_factor,9))
+            frappe.db.set_value("Allocation Detail", item.name, "qty_allocated",  flt(reserved_qty / item.conversion_factor,9))
+            frappe.db.set_value("Allocation Detail", item.name, "qty_to_allocate",  flt(item.qty_to_allocate -  reserved_qty / item.conversion_factor,9))
             frappe.db.set_value("Allocation Detail", item.name, "shortage", flt(((item.shortage * item.conversion_factor) - reserved_qty) / item.conversion_factor,9))
             sre_count += 1
             

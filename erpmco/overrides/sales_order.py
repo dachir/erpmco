@@ -5,7 +5,6 @@ class CustomSalesOrder(SalesOrder):
     pass
 
     def on_submit(self):
-        pass
         super().on_submit()
         self.create_allocation()
 
