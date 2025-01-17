@@ -1,13 +1,15 @@
 import frappe
 from erpnext.stock.doctype.delivery_note.delivery_note import DeliveryNote
-from frappe.utils import cint, flt, nowdate, nowtime
+from frappe.utils import cint, flt, nowdate, nowtime, parse_json
+from erpnext.stock.doctype.serial_and_batch_bundle.serial_and_batch_bundle import add_serial_batch_ledgers
 
 class CustomDeliveryNote(DeliveryNote):
     pass
 
 @frappe.whitelist()
-def get_delivery_note_items_from_reserved_stock(details):
+def get_delivery_note_items_from_reserved_stock(doc,details):
     try:
+        # Parse input details if passed as a JSON string
         if isinstance(details, str):
             details = frappe.parse_json(details)
 
@@ -28,54 +30,80 @@ def get_delivery_note_items_from_reserved_stock(details):
                     is_free_item, grant_commission, item_name, rate, amount
                 FROM `tabSales Order Item`
                 WHERE name = %s
-            """, (d["sales_order_item"]), as_dict=True)
+            """, (d["sales_order_item"],), as_dict=True)
 
             if so_item_data:
                 so_item = so_item_data[0]
 
-                # Append items with additional details
-                for b in sre.sb_entries:
-                    items.append(
-                        {
-                            "item_code":  d["item_code"],
-                            "qty": flt(b.qty / d["conversion_factor"] if d["conversion_factor"] > 0 else 1,9),
-                            "stock_qty": b.qty,
-                            "use_serial_batch_fields": 1,
-                            "batch_no": b.batch_no,
-                            "conversion_factor": d["conversion_factor"],
-                            "warehouse": b.warehouse,
-                            "stock_uom": d["stock_uom"],
-                            "uom": d["uom"],
-                            "against_sales_order": d["sales_order"],
-                            "so_detail": d["sales_order_item"],
-                            "is_free_item": so_item.is_free_item,
-                            "grant_commission": so_item.grant_commission,
-                            "item_name": so_item.item_name,
-                            "rate": so_item.rate,
-                            "amount": so_item.amount,
-                        }
-                    )
+                # Build item dictionary
+                item = frappe._dict({
+                    "item_code": d["item_code"],
+                    "qty": d["qty"],
+                    "stock_qty": d["stock_qty"],
+                    "use_serial_batch_fields": 0,
+                    "conversion_factor": d["conversion_factor"],
+                    "stock_uom": d["stock_uom"],
+                    "uom": d["uom"],
+                    "against_sales_order": d["sales_order"],
+                    "so_detail": d["sales_order_item"],
+                    "is_free_item": so_item.get("is_free_item"),
+                    "grant_commission": so_item.get("grant_commission"),
+                    "item_name": so_item.get("item_name"),
+                    "rate": so_item.get("rate"),
+                    "amount": so_item.get("amount"),
+                    "parenttype": "Delivery Note",
+                })
 
-            # Check for taxes on the Sales Order
+                # Process batches from Stock Reservation Entry
+                batches = []
+                for idx, b in enumerate(sre.sb_entries, start=1):
+                    batches.append({
+                        "batch_no": b.batch_no,
+                        "idx": idx,
+                        "name": f"row {idx}",
+                        "qty": b.qty,
+                    })
+
+                #if doc and isinstance(doc, str):
+                #    doc = parse_json(doc)
+
+                #frappe.throw(str(batches))
+
+
+                # Add serial and batch ledger data
+                sb_doc = add_serial_batch_ledgers(batches, item, doc, sre.warehouse)
+                item.update({
+                    "serial_and_batch_bundle": sb_doc.name,
+                    "warehouse": sb_doc.warehouse,
+                })
+
+                items.append(item)
+
+            # Check and fetch taxes from the Sales Order
             sales_order = frappe.get_doc("Sales Order", d["sales_order"])
             if sales_order.taxes_and_charges and not taxes_and_charges:
                 taxes_and_charges = sales_order.taxes_and_charges
 
-                # Use SQL query to fetch taxes
+                # Fetch taxes using SQL query
                 taxes = frappe.db.sql("""
                     SELECT 
                         charge_type, account_head, description, rate, tax_amount
                     FROM `tabSales Taxes and Charges`
                     WHERE parent = %s
-                """, (d["sales_order"]), as_dict=True)
+                """, (d["sales_order"],), as_dict=True)
 
-        # Return the consolidated data
-        data = {"items": items, "taxes_and_charges": taxes_and_charges, "taxes": taxes}
+        # Consolidated data to return
+        data = {
+            "items": items,
+            "taxes_and_charges": taxes_and_charges,
+            "taxes": taxes,
+        }
         return data
 
     except Exception as e:
         frappe.log_error(frappe.get_traceback(), "Delivery Note Creation Error")
         frappe.throw(f"An error occurred while creating Delivery Notes: {str(e)}")
+
 
 
 
