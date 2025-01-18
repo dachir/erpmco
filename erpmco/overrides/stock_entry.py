@@ -27,6 +27,7 @@ from erpnext.accounts.general_ledger import (
     process_gl_map,
 )
 from erpnext.stock import get_warehouse_account_map
+from erpplus.overrides.stock_entry import on_submit_function
 
 class CustomStockEntry(StockEntry):
     
@@ -51,6 +52,8 @@ class CustomStockEntry(StockEntry):
             self.set_material_request_transfer_status("In Transit")
         if self.purpose == "Material Transfer" and self.outgoing_stock_entry:
             self.set_material_request_transfer_status("Completed")
+
+        on_submit_function()
 
 
     def make_gl_entries(self, gl_entries=None, from_repost=False, via_landed_cost_voucher=False):
