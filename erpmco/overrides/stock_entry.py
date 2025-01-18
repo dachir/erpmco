@@ -29,86 +29,86 @@ class CustomStockEntry(StockEntry):
     #    super().on_submit()
 
     def get_gl_entries(self, warehouse_account):
-		gl_entries = super().get_gl_entries(warehouse_account)
+        gl_entries = super().get_gl_entries(warehouse_account)
 
-		if self.purpose in ("Repack", "Manufacture"):
-			total_basic_amount = sum(flt(t.basic_amount) for t in self.get("items") if t.is_finished_item)
-		else:
-			total_basic_amount = sum(flt(t.basic_amount) for t in self.get("items") if t.t_warehouse)
+        if self.purpose in ("Repack", "Manufacture"):
+            total_basic_amount = sum(flt(t.basic_amount) for t in self.get("items") if t.is_finished_item)
+        else:
+            total_basic_amount = sum(flt(t.basic_amount) for t in self.get("items") if t.t_warehouse)
 
-		divide_based_on = total_basic_amount
+        divide_based_on = total_basic_amount
 
-		if self.get("additional_costs") and not total_basic_amount:
-			# if total_basic_amount is 0, distribute additional charges based on qty
-			divide_based_on = sum(item.qty for item in list(self.get("items")))
+        if self.get("additional_costs") and not total_basic_amount:
+            # if total_basic_amount is 0, distribute additional charges based on qty
+            divide_based_on = sum(item.qty for item in list(self.get("items")))
 
-		item_account_wise_additional_cost = {}
+        item_account_wise_additional_cost = {}
 
-		for t in self.get("additional_costs"):
-			for d in self.get("items"):
-				if self.purpose in ("Repack", "Manufacture") and not d.is_finished_item:
-					continue
-				elif not d.t_warehouse:
-					continue
+        for t in self.get("additional_costs"):
+            for d in self.get("items"):
+                if self.purpose in ("Repack", "Manufacture") and not d.is_finished_item:
+                    continue
+                elif not d.t_warehouse:
+                    continue
 
-				item_account_wise_additional_cost.setdefault((d.item_code, d.name), {})
-				item_account_wise_additional_cost[(d.item_code, d.name)].setdefault(
-					t.expense_account, {"amount": 0.0, "base_amount": 0.0}
-				)
+                item_account_wise_additional_cost.setdefault((d.item_code, d.name), {})
+                item_account_wise_additional_cost[(d.item_code, d.name)].setdefault(
+                    t.expense_account, {"amount": 0.0, "base_amount": 0.0}
+                )
 
-				multiply_based_on = d.basic_amount if total_basic_amount else d.qty
+                multiply_based_on = d.basic_amount if total_basic_amount else d.qty
 
-				item_account_wise_additional_cost[(d.item_code, d.name)][t.expense_account]["amount"] += (
-					flt(t.amount * multiply_based_on) / divide_based_on
-				)
+                item_account_wise_additional_cost[(d.item_code, d.name)][t.expense_account]["amount"] += (
+                    flt(t.amount * multiply_based_on) / divide_based_on
+                )
                 if not t.base_amount:
                     frappe.throw(str("base_amount is null"))
                 if not multiply_based_on:
                     frappe.throw(str("multiply_based_on is null"))
 
-				item_account_wise_additional_cost[(d.item_code, d.name)][t.expense_account][
-					"base_amount"
-				] += flt(t.base_amount * multiply_based_on) / divide_based_on
+                item_account_wise_additional_cost[(d.item_code, d.name)][t.expense_account][
+                    "base_amount"
+                ] += flt(t.base_amount * multiply_based_on) / divide_based_on
 
-		if item_account_wise_additional_cost:
-			for d in self.get("items"):
-				for account, amount in item_account_wise_additional_cost.get(
-					(d.item_code, d.name), {}
-				).items():
-					if not amount:
-						continue
+        if item_account_wise_additional_cost:
+            for d in self.get("items"):
+                for account, amount in item_account_wise_additional_cost.get(
+                    (d.item_code, d.name), {}
+                ).items():
+                    if not amount:
+                        continue
 
-					gl_entries.append(
-						self.get_gl_dict(
-							{
-								"account": account,
-								"against": d.expense_account,
-								"cost_center": d.cost_center,
-								"remarks": self.get("remarks") or _("Accounting Entry for Stock"),
-								"credit_in_account_currency": flt(amount["amount"]),
-								"credit": flt(amount["base_amount"]),
-							},
-							item=d,
-						)
-					)
+                    gl_entries.append(
+                        self.get_gl_dict(
+                            {
+                                "account": account,
+                                "against": d.expense_account,
+                                "cost_center": d.cost_center,
+                                "remarks": self.get("remarks") or _("Accounting Entry for Stock"),
+                                "credit_in_account_currency": flt(amount["amount"]),
+                                "credit": flt(amount["base_amount"]),
+                            },
+                            item=d,
+                        )
+                    )
 
-					gl_entries.append(
-						self.get_gl_dict(
-							{
-								"account": d.expense_account,
-								"against": account,
-								"cost_center": d.cost_center,
-								"remarks": self.get("remarks") or _("Accounting Entry for Stock"),
-								"credit": -1
-								* amount[
-									"base_amount"
-								],  # put it as negative credit instead of debit purposefully
-							},
-							item=d,
-						)
-					)
+                    gl_entries.append(
+                        self.get_gl_dict(
+                            {
+                                "account": d.expense_account,
+                                "against": account,
+                                "cost_center": d.cost_center,
+                                "remarks": self.get("remarks") or _("Accounting Entry for Stock"),
+                                "credit": -1
+                                * amount[
+                                    "base_amount"
+                                ],  # put it as negative credit instead of debit purposefully
+                            },
+                            item=d,
+                        )
+                    )
 
-		return process_gl_map(gl_entries)
+        return process_gl_map(gl_entries)
         
 
     def set_basic_rate(self, reset_outgoing_rate=True, raise_error_if_no_rate=True):
