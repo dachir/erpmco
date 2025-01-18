@@ -22,9 +22,9 @@ from frappe.utils import (
 
 from erpnext.accounts.general_ledger import process_gl_map
 from erpnext.accounts.general_ledger import (
-	make_gl_entries,
-	make_reverse_gl_entries,
-	process_gl_map,
+    make_gl_entries,
+    make_reverse_gl_entries,
+    process_gl_map,
 )
 from erpnext.stock import get_warehouse_account_map
 
