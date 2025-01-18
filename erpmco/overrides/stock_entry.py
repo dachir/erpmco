@@ -41,7 +41,7 @@ class CustomStockEntry(StockEntry):
         self.update_subcontracting_order_status()
         self.update_pick_list_status()
 
-        self.make_gl_entries()
+        self.make_gl_entries_2()
 
         self.repost_future_sle_and_gle()
         self.update_cost_in_project()
@@ -56,7 +56,7 @@ class CustomStockEntry(StockEntry):
         on_submit_function()
 
 
-    def make_gl_entries(self, gl_entries=None, from_repost=False, via_landed_cost_voucher=False):
+    def make_gl_entries_2(self, gl_entries=None, from_repost=False, via_landed_cost_voucher=False):
         if self.docstatus == 2:
             make_reverse_gl_entries(voucher_type=self.doctype, voucher_no=self.name)
 
@@ -78,14 +78,14 @@ class CustomStockEntry(StockEntry):
             if self.docstatus == 1:
                 if not gl_entries:
                     gl_entries = (
-                        self.get_gl_entries(warehouse_account, via_landed_cost_voucher)
+                        self.get_gl_entries_2(warehouse_account, via_landed_cost_voucher)
                         if self.doctype == "Purchase Receipt"
-                        else self.get_gl_entries(warehouse_account)
+                        else self.get_gl_entries_2(warehouse_account)
                     )
                 make_gl_entries(gl_entries, from_repost=from_repost)
 
 
-    def get_gl_entries(self, warehouse_account):
+    def get_gl_entries_2(self, warehouse_account):
         gl_entries = self.super_get_gl_entries(warehouse_account)
 
         if self.purpose in ("Repack", "Manufacture"):
