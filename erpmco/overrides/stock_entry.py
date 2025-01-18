@@ -110,11 +110,11 @@ class CustomStockEntry(StockEntry):
 
         return process_gl_map(gl_entries)
         
-
+    """
     def set_basic_rate(self, reset_outgoing_rate=True, raise_error_if_no_rate=True):
-        """
-        Set rate for outgoing, scrapped and finished items
-        """
+
+        #Set rate for outgoing, scrapped and finished items
+
         # Set rate for outgoing items
         outgoing_items_cost = self.set_rate_for_outgoing_items(reset_outgoing_rate, raise_error_if_no_rate)
         finished_item_qty = sum(d.transfer_qty for d in self.items if d.is_finished_item)
@@ -186,6 +186,7 @@ class CustomStockEntry(StockEntry):
 
             frappe.msgprint(message, alert=True)
 
+    
     def get_basic_rate_for_manufactured_item(self, finished_item_qty, outgoing_items_cost=0) -> float:
         scrap_in_incoming_cost = frappe.db.get_single_value('Custom Manufacturing Setting', 'scrap_in_incoming_cost')
         settings = frappe.get_single("Manufacturing Settings")
@@ -320,7 +321,7 @@ class CustomStockEntry(StockEntry):
                         "description": "Operating Cost as per Work Order / BOM",
                         "amount": cost * total_costs / total_cost_per_hour,
                     })
-
+    """
 
 def get_operating_cost_per_unit(work_order=None, bom_no=None):
     operating_cost_per_unit = 0
