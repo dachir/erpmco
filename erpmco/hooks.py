@@ -130,7 +130,7 @@ app_license = "mit"
 # Override standard doctype classes
 
 override_doctype_class = {
-    "Purchase Receipt": "erpmco.overrides.purchase_receipt.CustomPurchaseReceipt",
+    #"Purchase Receipt": "erpmco.overrides.purchase_receipt.CustomPurchaseReceipt",
     "Work Order": "erpmco.overrides.work_order.CustomWorkOrder",
     #"Stock Entry": "erpmco.overrides.stock_entry.CustomStockEntry",
     "Stock Reservation Entry": "erpmco.overrides.stock_reservation_entry.CustomStockReservationEntry",

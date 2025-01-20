@@ -74,5 +74,43 @@
   "reference_doctype": "Stock Entry",
   "script": "if doc.work_order and doc.stock_entry_type == \"Manufacture\":\r\n    # Create a dictionary with item_code as the key and total_weight as the value\r\n    item_weights = {\r\n        i.item_code: frappe.db.get_value(\"Item\", i.item_code, \"weight_per_unit\") * i.qty\r\n        for i in doc.items\r\n        if i.t_warehouse and frappe.db.get_value(\"Item\", i.item_code, \"weight_per_unit\")\r\n    }\r\n    \r\n    # Calculate total weight\r\n    total_weight = sum(item_weights.values())\r\n    \r\n    # Calculate global unit costs\r\n    global_unit_cost = doc.total_outgoing_value / total_weight if total_weight > 0 else 0\r\n    global_unit_add_cost = doc.total_additional_costs / total_weight if total_weight > 0 else 0\r\n    \r\n    # Update the rows in doc.items\r\n    for i in doc.items:\r\n        if i.t_warehouse and i.item_code in item_weights:\r\n            # Update basic_amount\r\n            i.basic_amount = item_weights[i.item_code] * global_unit_cost\r\n            # Update additional_cost\r\n            i.additional_cost = item_weights[i.item_code] * global_unit_add_cost\r\n            # Calculate and update basic_rate\r\n            i.basic_rate = i.basic_amount / i.qty if i.qty > 0 else 0\r\n\r\n    \r\n\r\n",
   "script_type": "DocType Event"
+ },
+ {
+  "allow_guest": 0,
+  "api_method": null,
+  "cron_format": null,
+  "disabled": 0,
+  "docstatus": 0,
+  "doctype": "Server Script",
+  "doctype_event": "Before Insert",
+  "enable_rate_limit": 0,
+  "event_frequency": "All",
+  "modified": "2025-01-20 09:33:12.837212",
+  "module": "Erpmco",
+  "name": "PR Manage Quality Status Before Insert",
+  "rate_limit_count": 5,
+  "rate_limit_seconds": 86400,
+  "reference_doctype": "Purchase Receipt",
+  "script": "# Define conditions for item groups\r\ngroup_5k = ['ENG', 'ENGSS', 'ENGCS']\r\ngroup_all = ['ITEQP', 'ADMFO', 'LABCH', 'OFF', 'STAT']\r\n\r\n# Update quality_status for matching items\r\nfor item in doc.items:\r\n    if doc.branch:\r\n        item.branch = doc.branch\r\n        frappe.db.set_value(\"Purchase Receipt Item\", item.name, \"branch\", doc.branch)\r\n\r\n    # Get item group\r\n    item_group = frappe.db.get_value(\"Item\", item.item_code, \"item_group\")\r\n\r\n    if ((item_group in group_5k and frappe.utils.flt(item.valuation_rate) <= 5000) or (item_group in group_all)):\r\n        item.quality_status = \"5K\"\r\n        frappe.db.set_value(\"Purchase Receipt Item\", item.name, \"quality_status\", \"5K\")\r\n    else:\r\n        custom_control_quality = frappe.db.get_value(\"Item\", item.item_code, \"custom_control_quality\")\r\n        if bool(custom_control_quality):\r\n            item.quality_status = \"Q\"  if item.branch == \"Kinshasa\" else \"A\"\r\n            frappe.db.set_value(\"Purchase Receipt Item\", item.name, \"quality_status\", \"Q\"  if item.branch == \"Kinshasa\" else \"A\")\r\n        else:\r\n            item.quality_status = \"A\"\r\n            frappe.db.set_value(\"Purchase Receipt Item\", item.name, \"quality_status\", \"A\")",
+  "script_type": "DocType Event"
+ },
+ {
+  "allow_guest": 0,
+  "api_method": null,
+  "cron_format": null,
+  "disabled": 0,
+  "docstatus": 0,
+  "doctype": "Server Script",
+  "doctype_event": "Before Insert",
+  "enable_rate_limit": 0,
+  "event_frequency": "All",
+  "modified": "2025-01-20 09:33:50.570519",
+  "module": "Erpmco",
+  "name": "PR Manage Quality Status Before Save",
+  "rate_limit_count": 5,
+  "rate_limit_seconds": 86400,
+  "reference_doctype": "Purchase Receipt",
+  "script": "# Define conditions for item groups\r\ngroup_5k = ['ENG', 'ENGSS', 'ENGCS']\r\ngroup_all = ['ITEQP', 'ADMFO', 'LABCH', 'OFF', 'STAT']\r\n\r\n# Update quality_status for matching items\r\nfor item in doc.items:\r\n    if doc.branch:\r\n        item.branch = doc.branch\r\n        frappe.db.set_value(\"Purchase Receipt Item\", item.name, \"branch\", doc.branch)\r\n\r\n    # Get item group\r\n    item_group = frappe.db.get_value(\"Item\", item.item_code, \"item_group\")\r\n\r\n    if ((item_group in group_5k and frappe.utils.flt(item.valuation_rate) <= 5000) or (item_group in group_all)):\r\n        item.quality_status = \"5K\"\r\n        frappe.db.set_value(\"Purchase Receipt Item\", item.name, \"quality_status\", \"5K\")\r\n    else:\r\n        custom_control_quality = frappe.db.get_value(\"Item\", item.item_code, \"custom_control_quality\")\r\n        if bool(custom_control_quality):\r\n            item.quality_status = \"Q\"  if item.branch == \"Kinshasa\" else \"A\"\r\n            frappe.db.set_value(\"Purchase Receipt Item\", item.name, \"quality_status\", \"Q\"  if item.branch == \"Kinshasa\" else \"A\")\r\n        else:\r\n            item.quality_status = \"A\"\r\n            frappe.db.set_value(\"Purchase Receipt Item\", item.name, \"quality_status\", \"A\")",
+  "script_type": "DocType Event"
  }
 ]
