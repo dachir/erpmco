@@ -146,7 +146,7 @@ override_doctype_class = {
 # Hook on document methods and events
 
 doc_events = {
-    ("Purchase Invoice", "Payment Request", "Purchase Receipt"): {
+    ("Purchase Invoice", "Payment Request", "Purchase Receipt","Material Request","Purchase Order","Leave Application"): {
         "before_save": "erpmco.utils.purchase_receipt.share_document",
     },
 # 	"*": {
