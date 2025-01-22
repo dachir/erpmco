@@ -145,13 +145,16 @@ override_doctype_class = {
 # ---------------
 # Hook on document methods and events
 
-# doc_events = {
+doc_events = {
+    ("Purchase Invoice", "Payment Request", "Purchase Receipt"): {
+        "before_save": "erpmco.utils.purchase_receipt.share_document",
+    },
 # 	"*": {
 # 		"on_update": "method",
 # 		"on_cancel": "method",
 # 		"on_trash": "method"
 # 	}
-# }
+}
 
 # Scheduled Tasks
 # ---------------

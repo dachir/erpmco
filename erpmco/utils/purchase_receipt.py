@@ -1,4 +1,9 @@
 import frappe
+from erp_space import erpspace
+
+def share_document(doc, method):
+    erpspace.share_doc(doc)
+
 
 def process_unreconciled_purchase_receipts():
     """
