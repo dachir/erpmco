@@ -5,6 +5,16 @@ def share_document(doc, method):
     erpspace.share_doc(doc)
 
 
+def update_dossier(doc, method):
+    # Create a new Dossier document with the purchase_order linked to the current doc's name
+    dossier = frappe.get_doc({
+        "doctype": "Dossier",
+        "purchase_order": doc.name
+    })
+    # Insert the new Dossier document into the database
+    dossier.insert(ignore_permissions=True)
+
+
 def process_unreconciled_purchase_receipts():
     """
     Processes Purchase Receipts without corresponding Stock Reconciliation entries.

@@ -149,6 +149,9 @@ doc_events = {
     ("Purchase Invoice", "Payment Request", "Purchase Receipt","Material Request","Purchase Order","Leave Application"): {
         ("after_insert", "after_save"): "erpmco.utils.purchase_receipt.share_document",
     },
+    "Purchase Order":{
+        "after_insert": "erpmco.utils.purchase_receipt.update_dossier",
+    },
 # 	"*": {
 # 		"on_update": "method",
 # 		"on_cancel": "method",
@@ -164,9 +167,9 @@ scheduler_events = {
         "*/1 * * * *": [
             "erpmco.utils.purchase_receipt.process_unreconciled_purchase_receipts"
         ],
-        "*/10 * * * *": [
-            "erpmco.erpmco.doctype.allocation.allocation.process_shortages"
-        ],
+        #"*/10 * * * *": [
+        #    "erpmco.erpmco.doctype.allocation.allocation.process_shortages"
+        #],
     },
 # 	"all": [
 # 		"erpmco.tasks.all"
