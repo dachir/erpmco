@@ -146,11 +146,32 @@ override_doctype_class = {
 # Hook on document methods and events
 
 doc_events = {
-    ("Purchase Invoice", "Payment Request", "Purchase Receipt","Material Request","Purchase Order","Leave Application"): {
-        ("after_insert", "after_save"): "erpmco.utils.purchase_receipt.share_document",
+    "Purchase Invoice": {
+        "after_insert": "erpmco.utils.purchase_receipt.share_document",
+        "after_save": "erpmco.utils.purchase_receipt.share_document",
     },
-    "Purchase Order":{
-        "after_insert": "erpmco.utils.purchase_receipt.update_dossier",
+    "Payment Request": {
+        "after_insert": "erpmco.utils.purchase_receipt.share_document",
+        "after_save": "erpmco.utils.purchase_receipt.share_document",
+    },
+    "Purchase Receipt": {
+        "after_insert": "erpmco.utils.purchase_receipt.share_document",
+        "after_save": "erpmco.utils.purchase_receipt.share_document",
+    },
+    "Material Request": {
+        "after_insert": "erpmco.utils.purchase_receipt.share_document",
+        "after_save": "erpmco.utils.purchase_receipt.share_document",
+    },
+    "Purchase Order": {
+        "after_insert": [
+            "erpmco.utils.purchase_receipt.update_dossier",
+            "erpmco.utils.purchase_receipt.share_document"
+        ],
+        "after_save": "erpmco.utils.purchase_receipt.share_document",
+    },
+    "Leave Application": {
+        "after_insert": "erpmco.utils.purchase_receipt.share_document",
+        "after_save": "erpmco.utils.purchase_receipt.share_document",
     },
 # 	"*": {
 # 		"on_update": "method",

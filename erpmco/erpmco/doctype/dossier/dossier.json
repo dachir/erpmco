@@ -1,33 +1,25 @@
 {
  "actions": [],
  "allow_rename": 1,
- "autoname": "field:sales_order",
+ "autoname": "field:purchase_order",
  "creation": "2025-01-14 15:22:03.424318",
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
-  "sales_order",
   "purchase_order"
  ],
  "fields": [
   {
-   "fieldname": "sales_order",
-   "fieldtype": "Link",
-   "hidden": 1,
-   "label": "Sales Order",
-   "options": "Sales Order",
-   "unique": 1
-  },
-  {
    "fieldname": "purchase_order",
    "fieldtype": "Link",
    "label": "Purchase Order",
-   "options": "Purchase Order"
+   "options": "Purchase Order",
+   "unique": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-01-20 19:39:10.789754",
+ "modified": "2025-01-24 09:19:21.590337",
  "modified_by": "Administrator",
  "module": "Erpmco",
  "name": "Dossier",
