@@ -14,12 +14,13 @@
    "fieldtype": "Link",
    "label": "Purchase Order",
    "options": "Purchase Order",
+   "read_only": 1,
    "unique": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-01-24 09:19:21.590337",
+ "modified": "2025-01-24 15:36:01.370352",
  "modified_by": "Administrator",
  "module": "Erpmco",
  "name": "Dossier",
