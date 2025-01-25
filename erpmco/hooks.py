@@ -165,6 +165,9 @@ doc_events = {
     "Leave Application": {
         "validate": "erpmco.utils.purchase_receipt.share_document",
     },
+     "Maintenance Visit": {
+        "validate": "erpmco.utils.purchase_receipt.share_document",
+    },
 # 	"*": {
 # 		"on_update": "method",
 # 		"on_cancel": "method",
