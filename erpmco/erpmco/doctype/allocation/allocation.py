@@ -13,8 +13,8 @@ class Allocation(Document):
     #def before_save(self):
     #    self.populate_details()
 
-    def after_save(self):
-        self.update_shortages()
+    #def after_save(self):
+    #    self.update_shortages()
 
     @frappe.whitelist()
     def reserve_all(self):
