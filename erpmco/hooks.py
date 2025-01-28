@@ -165,9 +165,9 @@ doc_events = {
     "Leave Application": {
         "validate": "erpmco.utils.purchase_receipt.share_document",
     },
-    "Sales Order": {
-        "on_submit": "erpmco.overrides.sales_order.create_allocation",
-    },
+#    "Sales Order": {
+#        "on_submit": "erpmco.overrides.sales_order.create_allocation",
+#    },
 # 	"*": {
 # 		"on_update": "method",
 # 		"on_cancel": "method",
