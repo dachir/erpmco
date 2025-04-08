@@ -226,8 +226,6 @@ def get_data(filters=None):
 			"royalty_rate": royalty_rate
 		}, as_dict=True)
 
-		frappe.throw(str(result))
-
 		df = pd.DataFrame(result)
 		if df.empty:
 			continue
