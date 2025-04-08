@@ -226,7 +226,7 @@ def get_data(filters=None):
 			"royalty_rate": royalty_rate
 		}, as_dict=True)
 
-		df = pd.DataFrame(result)
+		df = pd.DataFrame([dict(r) for r in result])
 		if df.empty:
 			continue
 
