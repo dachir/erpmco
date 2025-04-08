@@ -217,8 +217,8 @@ def get_data(filters=None):
 
 		# Fetch data for the current month
 		result = frappe.db.sql(query, {
-			"month_start": month_start,
-			"month_end": month_end,
+			"from_date": month_start,
+			"to_date": month_end,
 			"branch": branch,
 			"inv_disc_rate": inv_disc_rate,
 			"csh_disc_rate": csh_disc_rate,
