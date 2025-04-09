@@ -74,8 +74,8 @@ def get_columns(filters, mois):
 	columns.extend(litteral_columns)
 
 	# Colonnes dynamiques par mois
-	for month in mois:
-		for base_col in numeric_columns:
+	for base_col in numeric_columns:
+		for month in mois:
 			col = deepcopy(base_col)
 			col["label"] = f"{base_col['label']} {month}"
 			col["fieldname"] = f"{base_col['fieldname']}_{month}"
