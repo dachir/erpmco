@@ -22,8 +22,8 @@ def get_columns(filters, mois):
 	# Colonnes littérales (communes à tous les mois)
 	litteral_columns = [
 		{"label": _("Branch"), "fieldtype": "Link", "fieldname": "branch", "options": "Branch", "width": 100},
-		{"label": _("Category"), "fieldtype": "Data", "fieldname": "category", "width": 100},
-		{"label": _("Sub Category"), "fieldtype": "Data", "fieldname": "sub_category", "width": 100},
+		#{"label": _("Category"), "fieldtype": "Data", "fieldname": "category", "width": 100},
+		#{"label": _("Sub Category"), "fieldtype": "Data", "fieldname": "sub_category", "width": 100},
 		{"label": _("Group"), "fieldtype": "Data", "fieldname": "group", "width": 150},
 		{"label": _("Item Code"), "fieldtype": "Link", "fieldname": "item_code", "options": "Item", "width": 100, "fixed": 1,},
 		{"label": _("Item Name"), "fieldtype": "Data", "fieldname": "item_name", "width": 150, "fixed": 1,},
