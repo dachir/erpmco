@@ -231,7 +231,7 @@ def get_data(filters=None):
 			continue
 
 		df['group'] = df['category'] + " - " + df['sub_category']
-		literal_cols = ["branch", "category", "sub_category", "group", "item_code", "item_name"]
+		literal_cols = ["branch", "category", "sub_category", "group", "item_code", "item_name", "uom", "conversion_factor", "production_item", "rn", "price_list"]
 		numeric_cols = [col for col in df.columns if col not in literal_cols]
 		df = df[literal_cols + numeric_cols]
 		df = df.rename(columns={col: f"{col}_{month}" for col in numeric_cols})
@@ -250,10 +250,12 @@ def get_data(filters=None):
 
 	for group in group_keys:
 		group_df = consolidated_df[consolidated_df['group'] == group]
-		total_row = {col: group_df[col].iloc[0] if col in literal_cols else group_df[col].sum()
-						for col in consolidated_df.columns}
-		total_row['item_name'] = f"TOTAL {group}"
-		total_row['item_code'] = ''
+		total_row = {
+			col: f"TOTAL {group}" if col == "item_name"
+			else "" if col in literal_cols
+			else group_df[col].sum()
+			for col in consolidated_df.columns
+		}
 		grouped_totals.append(total_row)
 
 	# Ajoute les lignes de sous-totaux
