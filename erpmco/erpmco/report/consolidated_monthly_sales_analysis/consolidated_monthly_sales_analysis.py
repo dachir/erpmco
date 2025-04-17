@@ -178,6 +178,25 @@ def get_data(filters=None):
 					ORDER BY si.posting_date, si.name
 				) AS t
 				GROUP BY t.item_code
+			),
+			taxes AS(
+				SELECT v.*, 
+					(v.tva + (1 - v.tva) * v.dda  + (1 - v.tva) * (1 - v.dda) * v.fpi) * 100 AS total_tax
+				FROM (
+					SELECT t.item_code, t.tax_category, MAX(t.tva) / 100 AS tva, MAX(t.dda) / 100 AS dda, MAX(t.fpi) / 100 AS fpi
+					FROM (
+						SELECT
+							it.parent AS item_code, it.tax_category,
+							CASE WHEN itd.tax_type LIKE '44310000%%' THEN itd.tax_rate ELSE 0 END AS tva,
+							CASE WHEN itd.tax_type LIKE '44350000%%' THEN itd.tax_rate ELSE 0 END AS dda,
+							CASE WHEN itd.tax_type LIKE '44210300%%' THEN itd.tax_rate ELSE 0 END AS fpi
+						FROM `tabItem` i JOIN `tabItem Tax` it ON it.parent = i.name
+							JOIN `tabItem Tax Template` itt  ON it.item_tax_template = itt.name
+							JOIN `tabItem Tax Template Detail` itd ON itd.parent = itt.name
+						WHERE i.item_group   = 'FG' AND i.disabled  = 0 AND itt.disabled = 0
+					) AS t
+					GROUP BY t.item_code, t.tax_category
+				) AS v
 			)
 			SELECT v.*, v.std_net_sales_ct / weight_in_ct AS std_net_sales_t, v.std_net_sales_with_tax_ct / weight_in_ct AS std_net_sales_with_tax_t,
 				(v.std_net_sales_ct / weight_in_ct) - v.std_cogs AS gp, gross_amount / qty AS actual_cost_ct, gross_amount / stock_qty AS actual_cost_t,
@@ -201,7 +220,7 @@ def get_data(filters=None):
 								THEN ip.price_list_rate * %(royalty_rate)s * (1 - %(inv_disc_rate)s) * (1 - %(csh_disc_rate)s) 
 								ELSE 0 
 						END AS royalty, c.cogs_rate_t , c.cogs_rate_t * stock_qty AS actual_buying, c.free_qty, c.cogs_free_qty_t,
-						cat.description AS category, scat.description AS sub_category
+						cat.description AS category, scat.description AS sub_category, x.tax_category, x.total_tax
 					FROM sales s 
 					INNER JOIN `tabItem Price` ip ON s.item_code = ip.item_code 
 					INNER JOIN tabItem i ON i.item_code = ip.item_code
@@ -209,8 +228,10 @@ def get_data(filters=None):
 					INNER JOIN `tabFamille Statistique` scat ON scat.name = i.sub_category
 					INNER JOIN ranked_routing r ON r.production_item = s.item_code AND r.rn = 1
 					LEFT JOIN cogs c ON c.item_code = s.item_code
+					LEFT JOIN taxes x ON x.item_code = s.item_code
 					WHERE LOWER(ip.price_list) LIKE CONCAT(LOWER(s.branch), ' gross', '%%') 
-					AND (%(from_date)s >= valid_from AND (%(from_date)s <= valid_upto OR valid_upto IS NULL))
+						AND x.tax_category LIKE CONCAT(s.branch, '%%')
+						AND (%(from_date)s >= valid_from AND (%(from_date)s <= valid_upto OR valid_upto IS NULL))
 				) AS t
 			) AS v
 		"""
