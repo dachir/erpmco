@@ -57,6 +57,7 @@ def get_columns(filters, mois):
 		{"label": _("STD TVA"), "fieldtype": "Currency", "fieldname": "std_tva"},
 		{"label": _("STD DDA"), "fieldtype": "Currency", "fieldname": "std_dda"},
 		{"label": _("STD FPI"), "fieldtype": "Currency", "fieldname": "std_fpi"},
+		{"label": _("STD Total Tax (%)"), "fieldtype": "Float", "fieldname": "total_tax"},
 		{"label": _("STD Net Sales CT"), "fieldtype": "Currency", "fieldname": "std_net_sales_ct"},
 		{"label": _("STD Net Sales T"), "fieldtype": "Currency", "fieldname": "std_net_sales_t"},
 		{"label": _("Net Material Cost"), "fieldtype": "Currency", "fieldname": "raw_material_cost"},
