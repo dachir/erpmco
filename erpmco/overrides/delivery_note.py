@@ -55,27 +55,22 @@ def get_delivery_note_items_from_reserved_stock(doc,details):
                 })
 
                 # Process batches from Stock Reservation Entry
-                batches = []
-                for idx, b in enumerate(sre.sb_entries, start=1):
-                    batches.append({
-                        "batch_no": b.batch_no,
-                        "idx": idx,
-                        "name": f"row {idx}",
-                        "qty": b.qty,
-                    })
-
-                #if doc and isinstance(doc, str):
-                #    doc = parse_json(doc)
-
-                #frappe.throw(str(batches))
+                #batches = []
+                #for idx, b in enumerate(sre.sb_entries, start=1):
+                #    batches.append({
+                #        "batch_no": b.batch_no,
+                #        "idx": idx,
+                #        "name": f"row {idx}",
+                #        "qty": b.qty,
+                #    })
 
 
                 # Add serial and batch ledger data
-                sb_doc = add_serial_batch_ledgers(batches, item, doc, sre.warehouse)
-                item.update({
-                    "serial_and_batch_bundle": sb_doc.name,
-                    "warehouse": sb_doc.warehouse,
-                })
+                #sb_doc = add_serial_batch_ledgers(batches, item, doc, sre.warehouse)
+                #item.update({
+                #    "serial_and_batch_bundle": sb_doc.name,
+                #    "warehouse": sb_doc.warehouse,
+                #})
 
                 items.append(item)
 
