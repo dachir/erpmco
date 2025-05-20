@@ -219,7 +219,7 @@ def get_data(filters=None):
 				) AS sub
 				GROUP BY sub.item_code, sub.price_list
 			)
-			SELECT v.*, v.std_net_sales_ct / weight_in_ct AS std_net_sales_t, v.std_net_sales_with_tax_ct / weight_in_ct AS std_net_sales_with_tax_t,
+			SELECT DISTINCT v.*, v.std_net_sales_ct / weight_in_ct AS std_net_sales_t, v.std_net_sales_with_tax_ct / weight_in_ct AS std_net_sales_with_tax_t,
 				(v.std_net_sales_ct / weight_in_ct) - v.std_cogs AS gp, gross_amount / qty AS actual_cost_ct, gross_amount / stock_qty AS actual_cost_t,
 				CASE WHEN (v.std_net_sales_ct / weight_in_ct) <> 0 THEN 100 * (1 - v.std_cogs / (v.std_net_sales_ct / weight_in_ct)) ELSE 0 END AS gp_percent,
 				v.actual_gp / v.net_amount * 100 AS actual_gp_percent, v.actual_buying / v.stock_qty AS actual_cogs_t, 
