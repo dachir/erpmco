@@ -227,24 +227,26 @@ def get_data(filters=None):
 			FROM(
 			SELECT t.*, t.price_list_rate - t.inv_disc - t.cash_disc - t.bonus - t.royalty AS std_net_sales_with_tax_ct, 
 				t.net_amount - t.actual_buying AS actual_gp,
-				(t.price_list_rate - t.inv_disc - t.cash_disc - t.bonus - t.royalty) * 0.16 / weight_in_ct AS std_tva,
-				(t.price_list_rate - t.inv_disc - t.cash_disc - t.bonus - t.royalty) * 0.84 * 0.1 * (IFNULL(dda,0) <> 0) / weight_in_ct AS std_dda,
-				(t.price_list_rate - t.inv_disc - t.cash_disc - t.bonus - t.royalty) * 0.84 * (1 - 0.1*(IFNULL(dda,0) <> 0)) * 0.0167 / weight_in_ct AS std_fpi,
-				(t.price_list_rate - t.inv_disc - t.cash_disc - t.bonus - t.royalty) * 0.84 * (1 - 0.1*(IFNULL(dda,0) <> 0)) * 0.9833 AS std_net_sales_ct
+				(t.price_list_rate - t.inv_disc - t.cash_disc - t.bonus - t.royalty - std_tva - std_dda - std_fpi)  AS std_net_sales_ct,
+				inv_disc / weight_in_ct AS inv_disc_t, cash_disc / weight_in_ct AS cash_disc_t, bonus / weight_in_ct AS bonus_t,
+				std_tva / weight_in_ct AS std_tva_t, std_dda / weight_in_ct AS std_dda_t, std_fpi / weight_in_ct AS std_fpi_t, royalty / weight_in_ct AS royalty_t
 			FROM (
 					SELECT s.*, r.*, ip.price_list, ip.price_list_rate, s.conversion_factor AS weight_in_ct, 
 						ip.price_list_rate / s.conversion_factor AS std_gross_rate, 
 						ip.price_list_rate * %(inv_disc_rate)s AS inv_disc,
 						ip.price_list_rate * %(csh_disc_rate)s * (1 - %(inv_disc_rate)s) AS cash_disc,
 						ip.price_list_rate * %(bonus_rate)s * (1 - %(inv_disc_rate)s) * (1 - %(csh_disc_rate)s) AS bonus,
-						CASE WHEN LOWER(s.item_name) LIKE '%%band%%' 
-								THEN ip.price_list_rate * %(royalty_rate)s * (1 - %(inv_disc_rate)s) * (1 - %(csh_disc_rate)s) 
-								ELSE 0 
-						END AS royalty, c.cogs_rate_t , c.cogs_rate_t * stock_qty AS actual_buying, c.free_qty, c.cogs_free_qty_t,
+
+						ip.price_list_rate * (1 - %(inv_disc_rate)s) * 0.16 AS std_tva,
+						ip.price_list_rate * (1 - %(inv_disc_rate)s) * 0.84 * 0.1 * (IFNULL(dda,0) <> 0)  AS std_dda,
+						ip.price_list_rate * (1 - %(inv_disc_rate)s) * 0.84 * (1 - 0.1*(IFNULL(dda,0) <> 0)) * 0.0167 AS std_fpi,
+						ip.price_list_rate * (1 - %(inv_disc_rate)s) * 0.84 * (1 - 0.1*(IFNULL(dda,0) <> 0)) * 0.9833 *
+							CASE WHEN LOWER(s.item_name) LIKE '%%band%%' THEN %(royalty_rate)s ELSE 0 END AS royalty, 
+						c.cogs_rate_t , c.cogs_rate_t * stock_qty AS actual_buying, c.free_qty, c.cogs_free_qty_t,
 						cat.description AS category, scat.description AS sub_category, x.tax_category, x.total_tax
 					FROM sales s 
 					INNER JOIN price_weights ip ON s.item_code = ip.item_code 
-					INNER JOIN tabItem i ON i.item_code = ip.item_code
+					INNER JOIN tabItem i ON i.name = ip.item_code
 					INNER JOIN `tabFamille Statistique` cat ON cat.name = i.category
 					INNER JOIN `tabFamille Statistique` scat ON scat.name = i.sub_category
 					INNER JOIN ranked_routing r ON r.production_item = s.item_code AND r.rn = 1
