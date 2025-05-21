@@ -245,14 +245,14 @@ def get_data(filters=None):
 						c.cogs_rate_t , c.cogs_rate_t * stock_qty AS actual_buying, c.free_qty, c.cogs_free_qty_t,
 						cat.description AS category, scat.description AS sub_category, x.tax_category, x.total_tax
 					FROM sales s 
-					INNER JOIN price_weights ip ON s.item_code = ip.item_code 
+					INNER JOIN price_weights ip ON s.item_code = ip.item_code AND ip.price_list LIKE CONCAT(s.branch, ' gross', '%%')
 					INNER JOIN tabItem i ON i.name = ip.item_code
 					INNER JOIN `tabFamille Statistique` cat ON cat.name = i.category
 					INNER JOIN `tabFamille Statistique` scat ON scat.name = i.sub_category
 					INNER JOIN ranked_routing r ON r.production_item = s.item_code AND r.rn = 1
 					LEFT JOIN cogs c ON c.item_code = s.item_code
 					LEFT JOIN taxes x ON x.item_code = s.item_code
-					WHERE x.tax_category LIKE CONCAT(s.branch, '%%')
+					WHERE x.tax_category LIKE CONCAT(s.branch, '%%') 
 				) AS t
 			) AS v
 		"""
