@@ -312,5 +312,4 @@ def get_data(filters=None):
 
 	#consolidated_df = pd.concat([consolidated_df, pd.DataFrame([total_general])], ignore_index=True)
 
-	#return consolidated_df.fillna(0).to_dict(orient='records'), months
-	return consolidated_df, months
+	return consolidated_df.fillna(0).to_dict(orient='records'), months
