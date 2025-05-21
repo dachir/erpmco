@@ -182,9 +182,9 @@ def get_data(filters=None):
 			),
 			taxes AS(
 				SELECT v.*, 
-					(v.tva + (1 - v.tva) * v.dda  + (1 - v.tva) * (1 - v.dda) * v.fpi) * 100 AS total_tax
+					(v.tva_1 + (1 - v.tva_1) * v.dda_1  + (1 - v.tva_1) * (1 - v.dda_1) * v.fpi_1) * 100 AS total_tax
 				FROM (
-					SELECT t.item_code, t.tax_category, MAX(t.tva) / 100 AS tva, MAX(t.dda) / 100 AS dda, MAX(t.fpi) / 100 AS fpi
+					SELECT t.item_code, t.tax_category, MAX(t.tva) / 100 AS tva_1, MAX(t.dda) / 100 AS dda_1, MAX(t.fpi) / 100 AS fpi_1
 					FROM (
 						SELECT
 							it.parent AS item_code, it.tax_category,
