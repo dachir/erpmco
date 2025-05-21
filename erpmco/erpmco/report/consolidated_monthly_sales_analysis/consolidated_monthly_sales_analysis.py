@@ -287,29 +287,30 @@ def get_data(filters=None):
 		consolidated_df = pd.merge(consolidated_df, df, how='outer', on=literal_cols)
 
 	# Sous-totaux par groupe
-	grouped_totals = []
-	group_keys = consolidated_df['group'].unique()
+	#grouped_totals = []
+	#group_keys = consolidated_df['group'].unique()
 
-	for group in group_keys:
-		group_df = consolidated_df[consolidated_df['group'] == group]
-		total_row = {
-			col: f"TOTAL {group}" if col == "item_name"
-			else "" if col in literal_cols
-			else group_df[col].sum()
-			for col in consolidated_df.columns
-		}
-		grouped_totals.append(total_row)
+	#for group in group_keys:
+	#	group_df = consolidated_df[consolidated_df['group'] == group]
+	#	total_row = {
+	#		col: f"TOTAL {group}" if col == "item_name"
+	#		else "" if col in literal_cols
+	#		else group_df[col].sum()
+	#		for col in consolidated_df.columns
+	#	}
+	#	grouped_totals.append(total_row)
 
 	# Ajoute les lignes de sous-totaux
-	consolidated_df = pd.concat([consolidated_df, pd.DataFrame(grouped_totals)], ignore_index=True)
+	#consolidated_df = pd.concat([consolidated_df, pd.DataFrame(grouped_totals)], ignore_index=True)
 
 	# Total général
-	numeric_columns = [col for col in consolidated_df.columns if col not in literal_cols]
-	numeric_columns = [col for col in numeric_columns if consolidated_df[col].dtype in [np.float64, np.int64]]
+	#numeric_columns = [col for col in consolidated_df.columns if col not in literal_cols]
+	#numeric_columns = [col for col in numeric_columns if consolidated_df[col].dtype in [np.float64, np.int64]]
 
-	total_general = {col: consolidated_df[col].sum() if col in numeric_columns else '' for col in consolidated_df.columns}
-	total_general['item_name'] = 'TOTAL GENERAL'
+	#total_general = {col: consolidated_df[col].sum() if col in numeric_columns else '' for col in consolidated_df.columns}
+	#total_general['item_name'] = 'TOTAL GENERAL'
 
-	consolidated_df = pd.concat([consolidated_df, pd.DataFrame([total_general])], ignore_index=True)
+	#consolidated_df = pd.concat([consolidated_df, pd.DataFrame([total_general])], ignore_index=True)
 
-	return consolidated_df.fillna(0).to_dict(orient='records'), months
+	#return consolidated_df.fillna(0).to_dict(orient='records'), months
+	return consolidated_df
