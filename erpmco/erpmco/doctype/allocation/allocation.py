@@ -158,12 +158,12 @@ class Allocation(Document):
                 soi.warehouse,
                 soi.qty AS qty_ordered,
                 soi.stock_reserved_qty / conversion_factor AS qty_allocated,
-                soi.delivered_qty / conversion_factor AS qty_delivered,
-                (soi.qty - (soi.stock_reserved_qty  + soi.delivered_qty) / conversion_factor) AS qty_remaining,
+                soi.delivered_qty  AS qty_delivered,
+                soi.qty - soi.stock_reserved_qty / conversion_factor  - soi.delivered_qty AS qty_remaining,
                 conversion_factor
             FROM `tabSales Order` so
             INNER JOIN `tabSales Order Item` soi ON soi.parent = so.name
-            WHERE so.docstatus = 1 AND (soi.qty - (soi.stock_reserved_qty  + soi.delivered_qty) / conversion_factor) > 0 
+            WHERE so.docstatus = 1 AND (soi.qty - soi.stock_reserved_qty / conversion_factor  - soi.delivered_qty) > 0 
                 AND so.status not in ("Fully Delivered", "Closed", "Not Applicable")
                 AND so.company = %(company)s AND so.branch LIKE %(branch)s AND so.customer LIKE %(customer)s
                 AND soi.item_code LIKE %(item_code)s AND so.name LIKE %(sales_order)s
@@ -171,9 +171,9 @@ class Allocation(Document):
 
         # Adjust query based on filters
         if self.include_lines_fully_allocated:
-            query += " AND (soi.qty = soi.stock_reserved_qty / conversion_factor OR soi.qty > (soi.stock_reserved_qty + soi.delivered_qty) / conversion_factor)"
+            query += " AND (soi.qty = soi.stock_reserved_qty / conversion_factor OR soi.qty > (soi.stock_reserved_qty / conversion_factor + soi.delivered_qty))"
         else:
-            query += " AND soi.qty > (soi.stock_reserved_qty + soi.delivered_qty) / conversion_factor"
+            query += " AND soi.qty > (soi.stock_reserved_qty / conversion_factor + soi.delivered_qty)"
 
         customer = self.customer if self.customer else "%"
         item_code = self.item if self.item else "%"
