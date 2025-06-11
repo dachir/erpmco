@@ -323,7 +323,7 @@ def create_stock_reservation_entries(
         qty_to_be_reserved = flt(item.qty_to_allocate * item.conversion_factor,9) or 0
 
         if qty_to_be_reserved <= 0:
-                frappe.throw("No stock to reserve.")
+            frappe.throw("No stock to reserve.")
 
         reserved_qty = min(qty_to_be_reserved, total_available_stock)
 
