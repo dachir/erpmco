@@ -163,9 +163,9 @@ def get_data(filters=None):
 				WHERE b.docstatus = 1 AND b.is_active = 1 AND b.is_default = 1
 			),
 			cogs AS(
-				SELECT t.item_code, SUM(t.cogs) / SUM(t.stock_qty) AS cogs_rate_t, SUM(free_qty) AS free_qty, SUM(cogs_free_qty) / SUM(t.free_qty) AS cogs_free_qty_t
+				SELECT t.branch, t.item_code, SUM(t.cogs) / SUM(t.stock_qty) AS cogs_rate_t, SUM(free_qty) AS free_qty, SUM(cogs_free_qty) / SUM(t.free_qty) AS cogs_free_qty_t
 				FROM(
-					SELECT si.name, si.posting_date, si.customer, si.customer_name, dni.item_code, dni.item_name, dni.qty, 
+					SELECT si.branch, si.name, si.posting_date, si.customer, si.customer_name, dni.item_code, dni.item_name, dni.qty, 
 						CASE WHEN dni.stock_uom = 'T' THEN dni.stock_qty ELSE 0 END as stock_qty,
 						dni.stock_qty* dni.incoming_rate AS cogs, dni.parent, dni.against_sales_order,
 						CASE WHEN dni.is_free_item = 1 THEN dni.stock_qty ELSE 0 END AS free_qty,
@@ -174,11 +174,11 @@ def get_data(filters=None):
 						`tabSales Invoice Item` sii on dni.parent = sii.delivery_note and dni.item_code = sii.item_code
 					LEFT JOIN `tabSales Invoice` si ON si.name = sii.parent 
 					WHERE si.docstatus = 1 AND si.posting_date BETWEEN %(from_date)s AND %(to_date)s AND si.branch LIKE %(branch)s
-					GROUP BY si.name, si.posting_date, si.customer, si.customer_name, dni.item_code, dni.item_name, 
+					GROUP BY si.branch, si.name, si.posting_date, si.customer, si.customer_name, dni.item_code, dni.item_name, 
 						dni.qty, dni.stock_qty, dni.amount, dni.parent, dni.against_sales_order
 					ORDER BY si.posting_date, si.name
 				) AS t
-				GROUP BY t.item_code
+				GROUP BY t.branch, t.item_code
 			),
 			taxes AS(
 				SELECT v.*, 
@@ -250,7 +250,7 @@ def get_data(filters=None):
 					INNER JOIN `tabFamille Statistique` cat ON cat.name = i.category
 					INNER JOIN `tabFamille Statistique` scat ON scat.name = i.sub_category
 					INNER JOIN ranked_routing r ON r.production_item = s.item_code AND r.rn = 1
-					LEFT JOIN cogs c ON c.item_code = s.item_code
+					LEFT JOIN cogs c ON c.item_code = s.item_code AND c.branch = s.branch
 					LEFT JOIN taxes x ON x.item_code = s.item_code
 					WHERE x.tax_category LIKE CONCAT(s.branch, '%%') 
 				) AS t
