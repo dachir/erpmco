@@ -238,9 +238,9 @@ def get_data(filters=None):
 						ip.price_list_rate * %(bonus_rate)s * (1 - %(inv_disc_rate)s) * (1 - %(csh_disc_rate)s) AS bonus,
 
 						ip.price_list_rate * (1 - %(inv_disc_rate)s) * 0.16 AS std_tva,
-						ip.price_list_rate * (1 - %(inv_disc_rate)s) * 0.84 * 0.1 * (IFNULL(x.dda_1,0) <> 0)  AS std_dda,
-						ip.price_list_rate * (1 - %(inv_disc_rate)s) * 0.84 * (1 - 0.1*(IFNULL(x.dda_1,0) <> 0)) * 0.0167 AS std_fpi,
-						ip.price_list_rate * (1 - %(inv_disc_rate)s) * 0.84 * (1 - 0.1*(IFNULL(x.dda_1,0) <> 0)) * 0.9833 *
+						ip.price_list_rate * (1 - %(inv_disc_rate)s) * (CASE WHEN i.category = 'Cosmetic' THEN 0.15 ELSE 0.1 END) * (CASE WHEN IFNULL(x.dda_1, 0) <> 0 AND s.branch = 'Kinshasa' THEN 1 ELSE 0 END)  AS std_dda,
+						ip.price_list_rate * (1 - %(inv_disc_rate)s) * 0.0167 AS std_fpi,
+						ip.price_list_rate * (1 - %(inv_disc_rate)s) * 0.84 * (1 - (CASE WHEN i.category = 'Cosmetic' THEN 0.15 ELSE 0.1 END) * (CASE WHEN IFNULL(x.dda_1, 0) <> 0 AND s.branch = 'Kinshasa' THEN 1 ELSE 0 END)) * 0.9833 *
 							CASE WHEN LOWER(s.item_name) LIKE '%%band%%' THEN %(royalty_rate)s ELSE 0 END AS royalty, 
 						c.cogs_rate_t , c.cogs_rate_t * stock_qty AS actual_buying, c.free_qty, c.cogs_free_qty_t,
 						cat.description AS category, scat.description AS sub_category, x.tax_category, x.total_tax
