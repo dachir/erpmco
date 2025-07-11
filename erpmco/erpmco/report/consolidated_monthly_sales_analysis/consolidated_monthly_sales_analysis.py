@@ -50,6 +50,7 @@ def get_columns(filters, mois):
 		{"label": _("Weight in CT"), "fieldtype": "Float", "fieldname": "weight_in_ct"},
 		{"label": _("STD Gorss Sales"), "fieldtype": "Currency", "fieldname": "std_gross_rate"},
 		{"label": _("Inv Disc"), "fieldtype": "Currency", "fieldname": "inv_disc"},
+		{"label": _("Cash Disc"), "fieldtype": "Currency", "fieldname": "cash_disc"},
 		{"label": _("Bonus"), "fieldtype": "Currency", "fieldname": "bonus"},
 		{"label": _("Royalty"), "fieldtype": "Currency", "fieldname": "royalty"},
 		{"label": _("STD Net Sales CT with Tax"), "fieldtype": "Currency", "fieldname": "std_net_sales_with_tax_ct"},
