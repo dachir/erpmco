@@ -285,3 +285,11 @@ fixtures = [
     {"dt": "Client Script", "filters": [["enabled", "=", 1],["module", "=", "Erpmco"]]},
     {"dt": "Server Script", "filters": [["disabled", "=", 0],["module", "=", "Erpmco"]]},
 ]
+
+# In your app's hooks.py
+
+scheduler_events = {
+    "hourly": [
+        "erpmco.utils.update_dossier.update_gl_entry_dossier"
+    ]
+}
