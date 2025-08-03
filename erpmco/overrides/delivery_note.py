@@ -52,6 +52,7 @@ def get_delivery_note_items_from_reserved_stock(doc,details):
                     "rate": so_item.get("rate"),
                     "amount": so_item.get("amount"),
                     "parenttype": "Delivery Note",
+                    "warehouse": sre.warehouse,
                 })
 
                 # Process batches from Stock Reservation Entry
@@ -106,23 +107,40 @@ def get_delivery_note_items_from_reserved_stock(doc,details):
 
 @frappe.whitelist()
 def fetch_reserved_stock(customer=None):
+    # 1. Obtenir les quantités déjà utilisées dans des Delivery Note en draft
+    draft_delivery = frappe.db.sql("""
+        SELECT so_detail, SUM(qty) AS qty
+        FROM `tabDelivery Note Item` dni
+        INNER JOIN `tabDelivery Note` dn ON dn.name = dni.parent
+        WHERE dn.docstatus = 0 AND so_detail IS NOT NULL
+        GROUP BY so_detail
+    """, as_dict=True)
+
+    draft_map = {row.so_detail: flt(row.qty) for row in draft_delivery}
+
+    # 2. Exécuter ta requête principale d'origine
     query = """
         SELECT SUM(sre.custom_so_reserved_qty - sre.delivered_qty / sre.custom_conversion_factor) AS qty,SUM(sre.reserved_qty - sre.delivered_qty) AS stock_qty,
             sre.warehouse, sre.item_code, sre.name AS stock_reservation_entry, sre.custom_uom, sre.stock_uom,
-            sre.voucher_no AS sales_order, so.customer, sre.voucher_detail_no AS sales_order_item, sre.custom_conversion_factor
-        FROM `tabStock Reservation Entry` sre INNER JOIN `tabSales Order` so ON so.name = sre.voucher_no
-            INNER JOIN `tabSerial and Batch Entry` sbe ON sbe.parent = sre.name
+            sre.voucher_no AS sales_order, so.customer, sre.voucher_detail_no AS sales_order_item, sre.custom_conversion_factor, i.item_name
+        FROM `tabStock Reservation Entry` sre INNER JOIN `tabSales Order` so ON so.name = sre.voucher_no INNER JOIN `tabItem` i ON i.name = sre.item_code
         WHERE sre.reserved_qty > sre.delivered_qty AND sre.docstatus = 1 AND  so.customer = %s AND sre.status not in ("Delivered", "Cancelled") AND sre.voucher_type = 'Sales Order'
             AND so.status not in ("Delivered", "Cancelled", "Closed")
         GROUP BY sre.item_code, sre.warehouse, sre.voucher_no, so.customer, sre.voucher_detail_no, sre.name, sre.custom_conversion_factor 
     """
-    result = frappe.db.sql(query,customer, as_dict=True)
-    return result
+    raw_result = frappe.db.sql(query,customer, as_dict=True)
+
+    # 3. Réduire la quantité par ce qui est déjà dans les Delivery Notes brouillon
+    final_result = []
+    for row in raw_result:
+        so_item = row["sales_order_item"]
+        draft_qty = draft_map.get(so_item, 0)
+        qty_available = flt(row["qty"]) - flt(draft_qty)
+
+        if qty_available > 0:
+            row["qty"] = qty_available
+            final_result.append(row)
+
+    return final_result
 
 
-
-        #               
-
-
-
-    #erpmco.overrides.stock_entry.delivery_note.fetch_reserved_batches

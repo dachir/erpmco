@@ -15,32 +15,18 @@
   "sales_order",
   "item",
   "parameters_section",
-  "allocate_partially",
-  "generate_shortages",
-  "column_break_gnof",
-  "include_customer_allocations",
   "include_lines_fully_allocated",
+  "column_break_gnof",
   "column_break_wxgo",
   "column_break_gysh",
   "section_break_qhzk",
   "details",
-  "section_break_dyff",
-  "amended_from"
+  "section_break_dyff"
  ],
  "fields": [
   {
    "fieldname": "section_break_dyff",
    "fieldtype": "Section Break"
-  },
-  {
-   "fieldname": "amended_from",
-   "fieldtype": "Link",
-   "label": "Amended From",
-   "no_copy": 1,
-   "options": "Allocation",
-   "print_hide": 1,
-   "read_only": 1,
-   "search_index": 1
   },
   {
    "fieldname": "company",
@@ -72,26 +58,8 @@
    "label": "Parameters"
   },
   {
-   "default": "1",
-   "fieldname": "allocate_partially",
-   "fieldtype": "Check",
-   "label": "Allocate partially"
-  },
-  {
-   "default": "1",
-   "fieldname": "generate_shortages",
-   "fieldtype": "Check",
-   "label": "Generate shortages"
-  },
-  {
    "fieldname": "column_break_gnof",
    "fieldtype": "Column Break"
-  },
-  {
-   "default": "1",
-   "fieldname": "include_customer_allocations",
-   "fieldtype": "Check",
-   "label": "Include customer allocations"
   },
   {
    "default": "1",
@@ -147,10 +115,10 @@
    "options": "Sales Order"
   }
  ],
+ "grid_page_length": 50,
  "index_web_pages_for_search": 1,
- "is_submittable": 1,
  "links": [],
- "modified": "2025-01-07 19:52:08.985458",
+ "modified": "2025-08-03 12:06:38.517062",
  "modified_by": "Administrator",
  "module": "Erpmco",
  "name": "Allocation",
@@ -167,10 +135,10 @@
    "report": 1,
    "role": "System Manager",
    "share": 1,
-   "submit": 1,
    "write": 1
   }
  ],
+ "row_format": "Dynamic",
  "sort_field": "modified",
  "sort_order": "DESC",
  "states": []

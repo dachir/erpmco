@@ -5,6 +5,8 @@ app_description = "Marsavco customization"
 app_email = "mcoit@marsavco.com"
 app_license = "mit"
 
+import erpmco.overrides.stock_entry
+
 # Apps
 # ------------------
 
@@ -165,6 +167,9 @@ doc_events = {
     "Leave Application": {
         "validate": "erpmco.utils.purchase_receipt.share_document",
     },
+    "Stock Entry": {
+        "validate": "erpmco.utils.purchase_receipt.share_document",
+    },
 #    "Sales Order": {
 #        "on_submit": "erpmco.overrides.sales_order.create_allocation",
 #    },
@@ -291,5 +296,16 @@ fixtures = [
 scheduler_events = {
     "hourly": [
         "erpmco.utils.update_dossier.update_gl_entry_dossier"
-    ]
+    ],
+    "cron": {
+        "0 1 * * *": [
+            "erpmco.utils.cleanup.delete_old_allocations"
+        ]
+    }
 }
+
+# dans hooks.py
+app_include = [
+    "erpmco.overrides.stock_entry.CustomStockEntry"
+]
+

@@ -171,19 +171,6 @@ def create_stock_reservation_entries_for_so_items(
             reserved_qty = min(qty_to_be_reserved, available_qty)
             qty_to_be_reserved -= reserved_qty
 
-            #sre = frappe.new_doc("Stock Reservation Entry")
-            #sre.item_code = item.item_code
-            #sre.warehouse = warehouse
-            #sre.voucher_type = sales_order.doctype
-            #sre.voucher_no = sales_order.name
-            #sre.voucher_detail_no = item.name
-            #sre.available_qty = available_qty
-            #sre.voucher_qty = item.stock_qty
-            #sre.reserved_qty = reserved_qty
-            #sre.company = sales_order.company
-            #sre.stock_uom = item.stock_uom
-            #sre.project = sales_order.project
-
             args = frappe._dict({
                 "doctype": "Stock Reservation Entry",
                 "item_code": item.item_code,
@@ -245,16 +232,6 @@ def create_stock_reservation_entries_for_so_items(
                     }
                 )
 
-                #sre.append(
-                #    "sb_entries",
-                #    {
-                #        "serial_no": entry.serial_no,
-                #        "batch_no": entry.batch_no,
-                #        "qty": qty,
-                #        "warehouse": entry.warehouse,
-                #    },
-                #)
-                #frappe.throw(str(sre.as_json()))
                 index += 1
                 picked_qty += qty
 
