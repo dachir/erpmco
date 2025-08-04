@@ -42,11 +42,11 @@ def distribute_additional_costs(self):
         }
         total_weight = sum(item_weights.values())
 
-        if total_weight == 0:
-            return
+        #if total_weight == 0:
+        #    return
 
-        global_unit_cost = self.total_outgoing_value / total_weight
-        global_unit_add_cost = self.total_additional_costs / total_weight
+        global_unit_cost = self.total_outgoing_value / total_weight if total_weight > 0 else 0
+        global_unit_add_cost = self.total_additional_costs / total_weight if total_weight > 0 else 0
 
         for i in self.items:
             if i.t_warehouse and i.item_code in item_weights:
