@@ -148,32 +148,80 @@ class Allocation(Document):
         self.details = []
 
         query = """
-            SELECT 
-                so.name AS sales_order,
-                so.customer,
-                so.branch,
-                so.transaction_date AS date,
-                soi.name AS detail_name,
-                soi.item_code,
-                soi.warehouse,
-                soi.qty AS qty_ordered,
-                soi.stock_reserved_qty / conversion_factor AS qty_allocated,
-                soi.delivered_qty  AS qty_delivered,
-                soi.qty - soi.stock_reserved_qty / conversion_factor  - soi.delivered_qty AS qty_remaining,
-                conversion_factor
-            FROM `tabSales Order` so
-            INNER JOIN `tabSales Order Item` soi ON soi.parent = so.name
-            WHERE so.docstatus = 1 AND (soi.qty - soi.stock_reserved_qty / conversion_factor  - soi.delivered_qty) > 0 
-                AND so.status not in ("Fully Delivered", "Closed", "Not Applicable")
-                AND so.company = %(company)s AND so.branch LIKE %(branch)s AND so.customer LIKE %(customer)s
-                AND soi.item_code LIKE %(item_code)s AND so.name LIKE %(sales_order)s
+            SELECT *
+            FROM
+            (
+            SELECT DISTINCT
+                    so.name AS sales_order,
+                    so.transaction_date AS date,
+                    soi.item_code,
+                    soi.item_name,
+                    soi.qty AS qty_ordered,
+                    soi.delivered_qty AS qty_delivered,
+                    (soi.qty - IFNULL(dn_draft_qty.delivered_qty, 0) - soi.delivered_qty) AS qty_remaining,
+                    IFNULL(reserved_stock.custom_so_reserved_qty, 0) AS qty_allocated,
+                    (soi.qty - IFNULL(dn_draft_qty.delivered_qty, 0) - soi.delivered_qty) * soi.conversion_factor AS pending_qty_mt,
+                    CASE WHEN IFNULL(reserved_stock.reserved_qty, 0) = 0 THEN 0 ELSE
+                    CASE WHEN IFNULL(reserved_stock.reserved_qty, 0) - (soi.qty - IFNULL(dn_draft_qty.delivered_qty, 0) - soi.delivered_qty) * soi.conversion_factor < 0 THEN 1 ELSE 2 END END as reserved_status,
+                    soi.conversion_factor,
+                    soi.stock_qty,
+                    soi.warehouse,
+                    soi.name as detail_name,
+                    so.customer, so.branch
+                FROM
+                    `tabSales Order` so
+                INNER JOIN
+                    `tabSales Order Item` soi ON so.name = soi.parent
+                LEFT JOIN (
+                    SELECT
+                        dni.against_sales_order AS sales_order,
+                        dni.item_code,
+                        SUM(dni.qty) AS delivered_qty
+                    FROM
+                        `tabDelivery Note` dn
+                    INNER JOIN
+                        `tabDelivery Note Item` dni ON dn.name = dni.parent
+                    WHERE
+                        dn.docstatus = 0 -- Only draft delivery notes
+                    GROUP BY
+                        dni.against_sales_order, dni.item_code
+                ) dn_draft_qty 
+                    ON so.name = dn_draft_qty.sales_order 
+                    AND soi.item_code = dn_draft_qty.item_code
+                LEFT JOIN (
+                    SELECT
+                        sre.item_code,
+                        sre.voucher_no AS sales_order,
+                        sre.voucher_detail_no AS sales_order_item,
+                        SUM(sre.reserved_qty) AS reserved_qty,
+                        SUM(sre.custom_so_reserved_qty) AS custom_so_reserved_qty
+                    FROM
+                        `tabStock Reservation Entry` sre
+                    WHERE
+                        sre.docstatus = 1
+                        AND sre.voucher_type = 'Sales Order'
+                    GROUP BY
+                        sre.voucher_no, sre.voucher_detail_no, sre.item_code
+                ) reserved_stock
+                    ON soi.item_code = reserved_stock.item_code
+                    AND soi.parent = reserved_stock.sales_order
+                    AND soi.name = reserved_stock.sales_order_item
+                WHERE
+                    so.docstatus = 1
+                    AND so.status NOT IN ('Closed', 'Completed')
+                    AND (soi.qty - IFNULL(dn_draft_qty.delivered_qty, 0) - soi.delivered_qty) > 0
+                    AND so.company = %(company)s AND so.branch LIKE %(branch)s AND so.customer LIKE %(customer)s
+                    AND soi.item_code LIKE %(item_code)s AND so.name LIKE %(sales_order)s
+                ORDER BY
+                    so.transaction_date, so.name, soi.item_code
+            ) AS t   
         """
 
         # Adjust query based on filters
         if self.include_lines_fully_allocated:
-            query += " AND (soi.qty = soi.stock_reserved_qty / conversion_factor OR soi.qty > (soi.stock_reserved_qty / conversion_factor + soi.delivered_qty))"
+            query += " WHERE t.reserved_status <= 2"
         else:
-            query += " AND soi.qty > (soi.stock_reserved_qty / conversion_factor + soi.delivered_qty)"
+            query += " WHERE t.reserved_status <= 1"
 
         customer = self.customer if self.customer else "%"
         item_code = self.item if self.item else "%"

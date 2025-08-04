@@ -23,9 +23,9 @@ def create_allocation(doc, method):
             "customer": doc.customer,
             "sales_order": doc.name,
         })
-        allocation_entry.insert()
+        allocation_entry.insert(ignore_permissions=True)
         allocation_entry.populate_details()
         allocation_entry.reserve_all()
-        allocation_entry.submit()
+        allocation_entry.save(ignore_permissions=True)
             
 

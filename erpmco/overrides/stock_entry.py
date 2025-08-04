@@ -44,7 +44,9 @@ def distribute_additional_costs(self):
 
         #if total_weight == 0:
         #    return
-
+        #frappe.throw(str(self.total_outgoing_value))
+        if not self.total_outgoing_value:
+            return
         global_unit_cost = self.total_outgoing_value / total_weight if total_weight > 0 else 0
         global_unit_add_cost = self.total_additional_costs / total_weight if total_weight > 0 else 0
 
