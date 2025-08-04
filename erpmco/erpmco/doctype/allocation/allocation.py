@@ -272,12 +272,13 @@ def process_shortages(item_code=None):
 def get_available_stock_by_status(item_code, warehouse, status="A"):
     result =  frappe.db.sql(
             """
-            SELECT s.item_code, s.warehouse, i.stock_uom, s.quality_status, sum(s.actual_qty) - sum(b.reserved_stock) AS actual_qty
-            FROM `tabStock Ledger Entry` s INNER JOIN `tabItem` i ON s.item_code = i.item_code
-                INNER JOIN tabBin b ON s.item_code = b.item_code AND s.warehouse = b.warehouse
-            WHERE s.posting_date <= CURDATE() AND i.name = %s AND s.quality_status = %s AND  s.warehouse = %s
-            GROUP BY s.item_code, s.warehouse, s.quality_status
-            ORDER BY s.item_code, s.warehouse, s.quality_status
+            SELECT t.item_code, t.warehouse, t.stock_uom, t.quality_status, t.actual_qty - b.reserved_stock AS actual_qty
+            FROM(
+                SELECT s.item_code, s.warehouse, i.stock_uom, s.quality_status, SUM(s.actual_qty) AS actual_qty
+                FROM `tabStock Ledger Entry` s INNER JOIN `tabItem` i ON s.item_code = i.item_code
+                WHERE s.posting_date <= CURDATE() AND i.name = %s AND s.quality_status = %s AND  s.warehouse = %s
+                GROUP BY s.item_code, s.warehouse, i.stock_uom, s.quality_status
+            ) AS t INNER JOIN tabBin b ON t.item_code = b.item_code AND t.warehouse = b.warehouse
             """,(item_code, status, warehouse), as_dict=1
         )
     return result
