@@ -115,5 +115,21 @@ frappe.ui.form.on("Allocation", {
             });
         },__('Tools'));
     },
+
+});
+
+frappe.ui.form.on("Allocation Detail", {
+    qty_to_allocate: function(frm, cdt, cdn) {
+        let row = locals[cdt][cdn];
+
+        // Exemple : calcul simple
+        if (row.qty_to_allocate > row.remaining_qty) {
+             row.qty_to_allocate = row.remaining_qty;
+        }
+       
+
+        // Rafraîchir la ligne dans la table
+        frm.refresh_field("allocation_detail");
+    }
 });
 

@@ -432,7 +432,7 @@ def create_stock_reservation_entries(
                     "custom_conversion_factor": item.conversion_factor,
                     "custom_so_available_qty": flt(total_available_stock / item.conversion_factor,9),
                     "custom_so_voucher_qty": so_item_data[0].stock_qty,
-                    "custom_so_reserved_qty": flt((reserved_qty if warehouse_stock >= reserved_qty else warehouse_stock) / item.conversion_factor,9),
+                    "custom_so_reserved_qty": flt((reserved_qty if warehouse_stock >= reserved_qty else warehouse_stock) / item.conversion_factor,9) ,
                     #"sb_entries": sb_entries,
                 })
 
