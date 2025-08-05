@@ -246,7 +246,7 @@ class Allocation(Document):
                     "qty_allocated": so["qty_allocated"],
                     "qty_delivered": so["qty_delivered"],
                     "shortage": max(so["qty_remaining"] - so["qty_allocated"], 0),
-                    "qty_to_allocate": so["qty_remaining"] if so["qty_remaining"] > 0 else so["qty_allocated"],
+                    "qty_to_allocate": max(so["qty_remaining"] - so["qty_allocated"], 0),
                     "so_item": so["detail_name"],
                     "customer": so["customer"],
                     "branch": so["branch"],
