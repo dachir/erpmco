@@ -124,7 +124,7 @@ frappe.ui.form.on("Allocation Detail", {
 
         // Exemple : calcul simple
         if (row.qty_to_allocate > row.remaining_qty) {
-             row.qty_to_allocate = row.remaining_qty;
+             frappe.model.set_value(cdt, cdn, "qty_to_allocate", row.remaining_qty);
         }
        
 
