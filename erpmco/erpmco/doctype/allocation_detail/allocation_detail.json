@@ -19,7 +19,8 @@
   "shortage",
   "qty_delivered",
   "warehouse",
-  "branch"
+  "branch",
+  "remaining_qty"
  ],
  "fields": [
   {
@@ -112,18 +113,25 @@
    "fieldtype": "Float",
    "label": "UOM Conversion Factor",
    "read_only": 1
+  },
+  {
+   "fieldname": "remaining_qty",
+   "fieldtype": "Float",
+   "label": "Remaining Qty"
   }
  ],
+ "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-01-14 16:14:37.766340",
+ "modified": "2025-08-05 18:48:43.744897",
  "modified_by": "Administrator",
  "module": "Erpmco",
  "name": "Allocation Detail",
  "naming_rule": "Autoincrement",
  "owner": "Administrator",
  "permissions": [],
+ "row_format": "Dynamic",
  "sort_field": "modified",
  "sort_order": "DESC",
  "states": []

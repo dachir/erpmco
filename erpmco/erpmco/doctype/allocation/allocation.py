@@ -28,12 +28,14 @@ class Allocation(Document):
             warehouse_stock_map = frappe.cache().get_value(detail.item_code) or {}
 
             warehouse_stock_map = get_warehouse_stock_map(detail, warehouse_stock_map)
-            # Create reservation or shortage entries
-            create_stock_reservation_entries(
-                sales_order=sales_order, 
-                item=detail,
-                warehouse_stock_map=warehouse_stock_map,
-            )
+            warehouse_stock = sum(warehouse_stock_map.values()) #get_parent_stock_by_status(detail.item_code, "FG - MCO")
+            if warehouse_stock > 0:
+                # Create reservation or shortage entries
+                create_stock_reservation_entries(
+                    sales_order=sales_order, 
+                    item=detail,
+                    warehouse_stock_map=warehouse_stock_map,
+                )
         #frappe.throw("OK")
         for detail in self.details:
             frappe.cache.delete_value(detail.item_code) 
@@ -240,15 +242,16 @@ class Allocation(Document):
                     "date": so["date"],
                     "item_code": so["item_code"],
                     "warehouse": so["warehouse"],
-                    "qty_ordered": flt(so["qty_ordered"],2),
-                    "qty_allocated": flt(so["qty_allocated"],2),
-                    "qty_delivered": flt(so["qty_delivered"],2),
-                    "shortage": flt(max(so["qty_remaining"] - so["qty_allocated"], 0),2),
-                    "qty_to_allocate": flt(so["qty_remaining"] if so["qty_remaining"] > 0 else so["qty_allocated"],2),
+                    "qty_ordered": so["qty_ordered"],
+                    "qty_allocated": so["qty_allocated"],
+                    "qty_delivered": so["qty_delivered"],
+                    "shortage": max(so["qty_remaining"] - so["qty_allocated"], 0),
+                    "qty_to_allocate": so["qty_remaining"] if so["qty_remaining"] > 0 else so["qty_allocated"],
                     "so_item": so["detail_name"],
                     "customer": so["customer"],
                     "branch": so["branch"],
                     "conversion_factor": so["conversion_factor"],
+                    "remaining_qty": so["qty_remaining"],
                 },
             )
         self.save()
@@ -331,6 +334,21 @@ def get_available_stock_by_status(item_code, warehouse, status="A"):
         )
     return result
 
+def get_parent_stock_by_status(item_code, warehouse, status="A"):
+    result =  frappe.db.sql(
+            """
+            SELECT t.item_code, t.warehouse, t.stock_uom, t.quality_status, t.actual_qty - b.reserved_stock AS actual_qty
+            FROM(
+                SELECT s.item_code, s.warehouse, i.stock_uom, s.quality_status, SUM(s.actual_qty) AS actual_qty
+                FROM `tabStock Ledger Entry` s INNER JOIN `tabItem` i ON s.item_code = i.item_code
+                    INNER JOIN tabWarehouse w On s.warehouse = w.name
+                WHERE s.posting_date <= CURDATE() AND i.name = %s AND s.quality_status = %s AND  w.parent_warehouse = %s
+                GROUP BY s.item_code, s.warehouse, i.stock_uom, s.quality_status
+            ) AS t INNER JOIN tabBin b ON t.item_code = b.item_code AND t.warehouse = b.warehouse
+            """,(item_code, status, warehouse), as_dict=1
+        )
+    return result
+
 
 def get_warehouse_stock_map(item, warehouse_stock_map):
     from frappe.utils.nestedset import get_descendants_of
@@ -403,7 +421,7 @@ def create_stock_reservation_entries(
                     "voucher_no": sales_order.name,
                     "voucher_detail_no": item.so_item,
                     "available_qty": total_available_stock,
-                    "voucher_qty": so_item_data[0].qty,
+                    "voucher_qty": item.remaining_qty, #Ajout de remaining qty
                     "reserved_qty": reserved_qty if warehouse_stock >= reserved_qty else warehouse_stock,
                     "company": sales_order.company,
                     "stock_uom": so_item_data[0].stock_uom,
