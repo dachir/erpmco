@@ -83,7 +83,7 @@ def get_delivery_note_items_from_reserved_stock(doc,details):
                 # Fetch taxes using SQL query
                 taxes = frappe.db.sql("""
                     SELECT 
-                        charge_type, account_head, description, rate, tax_amount
+                        charge_type, account_head, description, rate, tax_amount, included_in_print_rate
                     FROM `tabSales Taxes and Charges`
                     WHERE parent = %s
                 """, (d["sales_order"],), as_dict=True)
