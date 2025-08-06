@@ -4,29 +4,120 @@
 frappe.ui.form.on('Allocation', {
     refresh: function (frm) {
         const grid_wrapper = frm.fields_dict.details.grid.wrapper;
-        // Find the grid-buttons div
         const actions_div = $(grid_wrapper).find('.grid-buttons');
 
-        // Add a custom button if it doesn't already exist
-        let unreserve_button = actions_div.find('.btn-unreserve');
-        if (!unreserve_button.length) {
-            unreserve_button = $('<button class="btn btn-warning btn-sm btn-unreserve">Unreserve</button>')
+        // 🔹 Fonction utilitaire : effet pulse + fade-out natif
+        const highlightRow = (row_name, color) => {
+            let $row_el = $(grid_wrapper).find(`[data-name="${row_name}"]`);
+            $row_el.css({
+                "background-color": color,
+                "transition": "transform 0.2s ease-in-out, background-color 1.5s ease"
+            }).css("transform", "scale(1.02)");
+
+            setTimeout(() => $row_el.css("transform", "scale(1)"), 200);
+            setTimeout(() => $row_el.css("background-color", "#ffffff"), 500);
+        };
+
+        // 🔹 Fonction pour mettre à jour les champs d'en-tête depuis le serveur
+        const updateHeaderTotalsFromServer = () => {
+            if (!frm.doc.item) {
+                frm.set_value('total_stock', 0);
+                frm.set_value('total_allocated', 0);
+                frm.set_value('remaining', 0);
+                return;
+            }
+
+            frappe.call({
+                method: "erpmco.erpmco.doctype.allocation.allocation.get_item_totals", // ⚠️ adapter chemin Python
+                args: {
+                    item_code: frm.doc.item,
+                    warehouse: frm.doc.warehouse || "FG - MCO"
+                },
+                callback: (r) => {
+                    if (r.message) {
+                        frm.set_value('total_stock', r.message.total_stock);
+                        frm.set_value('total_allocated', r.message.total_allocated);
+                        frm.set_value('remaining', r.message.remaining);
+                    }
+                }
+            });
+        };
+
+        // ==================== Bouton ✅ Reserve ====================
+        let reserve_button = actions_div.find('.btn-reserve');
+        if (!reserve_button.length) {
+            reserve_button = $('<button class="btn btn-success btn-sm btn-reserve">✅ Reserve</button>')
                 .appendTo(actions_div)
                 .click(() => {
-                    // Get selected row names
                     const selected_row_names = frm.fields_dict.details.grid.get_selected();
-                    if (selected_row_names.length === 0) {
+                    if (!selected_row_names.length) {
                         frappe.msgprint(__('Please select at least one row.'));
                         return;
                     }
 
-                    // Extract full row data for the selected rows
-                    const details = frm.doc.details.filter(row => selected_row_names.includes(row.name)).map(row => ({
-                        sales_order: row.sales_order,
-                        item_code: row.item_code
-                    }));
+                    const details = frm.doc.details
+                        .filter(row => selected_row_names.includes(row.name))
+                        .map(row => ({
+                            sales_order: row.sales_order,
+                            item_code: row.item_code,
+                            so_item: row.so_item,
+                            qty_to_allocate: row.qty_to_allocate,
+                            warehouse: row.warehouse,
+                            conversion_factor: row.conversion_factor,
+                            name: row.name,
+                            remaining_qty: row.remaining_qty
+                        }));
 
-                    console.log("Selected rows data:", details);
+                    frappe.call({
+                        doc: frm.doc,
+                        method: "reserve_all",
+                        args: { details: details },
+                        freeze: true,
+                        freeze_message: __("Reserving Stock..."),
+                        callback: (r) => {
+                            frappe.show_alert({ message: __("✅ Stock Reserved"), indicator: "green" }, 3);
+                            if (r.message?.length) {
+                                r.message.forEach(updated => {
+                                    let row = frm.doc.details.find(x => x.name === updated.name);
+                                    if (row) {
+                                        row.qty_allocated = updated.qty_allocated;
+                                        row.qty_to_allocate = updated.qty_to_allocate;
+                                        row.shortage = updated.shortage;
+                                        highlightRow(row.name, "#d4edda");
+                                    }
+                                });
+                                frm.refresh_field("details");
+                            }
+                            updateHeaderTotalsFromServer(); // 🔹 mise à jour des totaux
+                            frm.fields_dict.details.grid.grid_rows.forEach(row => {
+                                row.doc.check = 0;
+                                row.refresh_field('check');
+                            });
+                            reserve_button.hide();
+                        }
+                    });
+                });
+        }
+
+        // ==================== Bouton 🔓 Unreserve ====================
+        let unreserve_button = actions_div.find('.btn-unreserve');
+        if (!unreserve_button.length) {
+            unreserve_button = $('<button class="btn btn-warning btn-sm btn-unreserve">🔓 Unreserve</button>')
+                .appendTo(actions_div)
+                .click(() => {
+                    const selected_row_names = frm.fields_dict.details.grid.get_selected();
+                    if (!selected_row_names.length) {
+                        frappe.msgprint(__('Please select at least one row.'));
+                        return;
+                    }
+
+                    const details = frm.doc.details
+                        .filter(row => selected_row_names.includes(row.name))
+                        .map(row => ({
+                            sales_order: row.sales_order,
+                            item_code: row.item_code,
+                            name: row.name
+                        }));
 
                     frappe.call({
                         doc: frm.doc,
@@ -35,41 +126,113 @@ frappe.ui.form.on('Allocation', {
                         freeze: true,
                         freeze_message: __("Unreserving Stock..."),
                         callback: (r) => {
-                            // Uncheck all checkboxes
+                            frappe.show_alert({ message: __("⚠️ Stock Unreserved"), indicator: "orange" }, 3);
+                            if (r.message?.length) {
+                                r.message.forEach(updated => {
+                                    let row = frm.doc.details.find(x => x.name === updated.name);
+                                    if (row) {
+                                        row.qty_allocated = updated.qty_allocated;
+                                        row.qty_to_allocate = updated.qty_to_allocate;
+                                        row.shortage = updated.shortage;
+                                        highlightRow(row.name, "#fff3cd");
+                                    }
+                                });
+                                frm.refresh_field("details");
+                            }
+                            updateHeaderTotalsFromServer(); // 🔹 mise à jour des totaux
                             frm.fields_dict.details.grid.grid_rows.forEach(row => {
-                                row.doc.check = 0; // Uncheck the checkbox
-                                row.refresh_field('check'); // Refresh the field to update UI
+                                row.doc.check = 0;
+                                row.refresh_field('check');
                             });
-
-                            // Hide the button
                             unreserve_button.hide();
-                            frm.reload_doc();
-                        },
-                        error: function (error) {
-                            frappe.msgprint(__('An error occurred while canceling stock reservations.'));
-                            console.error(error);
                         }
                     });
                 });
         }
 
-        // Check the selected rows in the grid
-        const toggle_button_visibility = () => {
+        // ==================== Bouton 📦✅ Reserve All ====================
+        frm.add_custom_button(__('✅ Reserve All'), () => {
+            frappe.call({
+                doc: frm.doc,
+                method: "reserve_all",
+                freeze: true,
+                freeze_message: __("Reserving All Stock..."),
+                callback: (r) => {
+                    frappe.show_alert({ message: __("✅ All Stock Reserved"), indicator: "green" }, 3);
+                    if (r.message?.length) {
+                        r.message.forEach(updated => {
+                            let row = frm.doc.details.find(x => x.name === updated.name);
+                            if (row) {
+                                row.qty_allocated = updated.qty_allocated;
+                                row.qty_to_allocate = updated.qty_to_allocate;
+                                row.shortage = updated.shortage;
+                                highlightRow(row.name, "#d4edda");
+                            }
+                        });
+                        frm.refresh_field("details");
+                    }
+                    updateHeaderTotalsFromServer(); // 🔹 mise à jour des totaux
+                }
+            });
+        }, __('Tools'));
+
+        // ==================== Bouton 📦🔓 Unreserve All ====================
+        frm.add_custom_button(__('🔓 Unreserve All'), () => {
+            frappe.call({
+                doc: frm.doc,
+                method: "cancel_stock_reservation_entries",
+                freeze: true,
+                freeze_message: __("Unreserving All Stock..."),
+                callback: (r) => {
+                    frappe.show_alert({ message: __("⚠️ All Stock Unreserved"), indicator: "orange" }, 3);
+                    if (r.message?.length) {
+                        r.message.forEach(updated => {
+                            let row = frm.doc.details.find(x => x.name === updated.name);
+                            if (row) {
+                                row.qty_allocated = updated.qty_allocated;
+                                row.qty_to_allocate = updated.qty_to_allocate;
+                                row.shortage = updated.shortage;
+                                highlightRow(row.name, "#fff3cd");
+                            }
+                        });
+                        frm.refresh_field("details");
+                    }
+                    updateHeaderTotalsFromServer(); // 🔹 mise à jour des totaux
+                }
+            });
+        }, __('Tools'));
+
+        // ==================== Bouton 📋 Populate Details ====================
+        frm.add_custom_button(__('📋 Populate Details'), () => {
+            frappe.call({
+                doc: frm.doc,
+                method: "populate_details",
+                freeze: true,
+                freeze_message: __("Populating..."),
+                callback: () => {
+                    frappe.show_alert({ message: __("📋 Details Updated"), indicator: "blue" }, 3);
+                    frm.refresh_field("details");
+                    updateHeaderTotalsFromServer(); // 🔹 mise à jour des totaux
+                }
+            });
+        }, __('Tools'));
+
+        // ==================== Gestion visibilité Reserve/Unreserve ====================
+        const toggle_buttons_visibility = () => {
             const selected_rows = frm.fields_dict.details.grid.get_selected();
             if (selected_rows.length > 0) {
-                unreserve_button.show(); // Show the button if rows are selected
+                reserve_button.show();
+                unreserve_button.show();
             } else {
-                unreserve_button.hide(); // Hide the button if no rows are selected
+                reserve_button.hide();
+                unreserve_button.hide();
             }
         };
+        toggle_buttons_visibility();
+        $(grid_wrapper).on('change', '.grid-row-check, .grid-select-all', toggle_buttons_visibility);
 
-        // Initial visibility check
-        toggle_button_visibility();
-
-        // Re-check visibility whenever a checkbox is clicked in the grid
-        $(grid_wrapper).on('change', '.grid-row-check', function () {
-            toggle_button_visibility();
-        });
+        // 🔹 Initialisation des totaux au refresh
+        updateHeaderTotalsFromServer();
     }
 });
 
@@ -91,7 +254,7 @@ frappe.ui.form.on("Allocation", {
             });
         },__('Tools'));
 
-        frm.add_custom_button(__('Reserve All'), function() {
+        /*frm.add_custom_button(__('Reserve All'), function() {
             frappe.call({
                 doc: frm.doc,
                 method: "reserve_all",
@@ -113,7 +276,7 @@ frappe.ui.form.on("Allocation", {
                     frm.reload_doc();
                 },
             });
-        },__('Tools'));
+        },__('Tools'));*/
     },
 
 });
@@ -123,7 +286,7 @@ frappe.ui.form.on("Allocation Detail", {
         let row = locals[cdt][cdn];
 
         // Exemple : calcul simple
-        if (row.qty_to_allocate > row.remaining_qty) {
+        if (row.qty_to_allocate > Math.max(row.remaining_qty - row.qty_allocated, 0)) {
              frappe.model.set_value(cdt, cdn, "qty_to_allocate", row.remaining_qty - row.qty_allocated);
         }
        

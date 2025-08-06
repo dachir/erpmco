@@ -24,6 +24,32 @@ from erpnext.stock.doctype.stock_entry.stock_entry import StockEntry
 
 #class CustomStockEntry(StockEntry):
 
+def create_allocation(doc, method):
+    try:
+        parent_warehouse = frappe.db.get_value("Warehouse", doc.warehouse, "parent_warehouse")
+        if doc.stock_entry_type == 'Material Transfert' and parent_warehouse == 'FG - MCO':
+            if doc.branch == "Kinshasa":
+                """
+                Custom method to handle allocation logic
+                """
+                allocation_entry = frappe.get_doc({
+                    "doctype": "Allocation",
+                    "company": doc.company,
+                    "branch": doc.branch,
+                    "shipment_date": doc.delivery_date,
+                })
+                allocation_entry.insert(ignore_permissions=True)
+                allocation_entry.populate_details()
+                allocation_entry.reserve_all()
+                allocation_entry.save(ignore_permissions=True)
+
+    except Exception as e:
+        frappe.log_error(
+            message=frappe.get_traceback(),
+            title=f"Error creating allocation for Stock Entry {doc.name}"
+        )
+
+
 def distribute_additional_costs(self):
     # If no incoming items, set additional costs blank
     if not any(d.item_code for d in self.items if d.t_warehouse):

@@ -137,7 +137,7 @@ override_doctype_class = {
     #"Stock Entry": "erpmco.overrides.stock_entry.CustomStockEntry",
     "Stock Reservation Entry": "erpmco.overrides.stock_reservation_entry.CustomStockReservationEntry",
     #"Stock Ledger Entry": "erpmco.overrides.stock_ledger_entry.CustomStockLedgerEntry",
-    #"Sales Order": "erpmco.overrides.sales_order.CustomSalesOrder",
+    "Sales Order": "erpmco.overrides.sales_order.CustomSalesOrder",
     "Material Request": "erpmco.overrides.material_request.CustomMaterialRequest",
     #"Delivery Note": "erpmco.overrides.delivery_note.CustomDeliveryNote",
     #"BOM": "erpmco.overrides.stock_entry.CustomStockEntry",
@@ -169,6 +169,7 @@ doc_events = {
     },
     "Stock Entry": {
         "validate": "erpmco.utils.purchase_receipt.share_document",
+        "on_submit": "erpmco.overrides.stock_entry.create_allocation",
     },
     "Sales Order": {
         "on_submit": "erpmco.overrides.sales_order.create_allocation",

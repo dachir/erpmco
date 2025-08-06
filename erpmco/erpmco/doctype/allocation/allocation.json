@@ -17,8 +17,11 @@
   "parameters_section",
   "include_lines_fully_allocated",
   "column_break_gnof",
+  "total_stock",
   "column_break_wxgo",
+  "total_allocated",
   "column_break_gysh",
+  "remaining",
   "section_break_qhzk",
   "details"
  ],
@@ -108,12 +111,30 @@
    "fieldtype": "Link",
    "label": "Sales Order",
    "options": "Sales Order"
+  },
+  {
+   "fieldname": "total_stock",
+   "fieldtype": "Float",
+   "label": "Total Stock",
+   "read_only": 1
+  },
+  {
+   "fieldname": "total_allocated",
+   "fieldtype": "Float",
+   "label": "Total Allocated",
+   "read_only": 1
+  },
+  {
+   "fieldname": "remaining",
+   "fieldtype": "Float",
+   "label": "Remaining",
+   "read_only": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-08-04 18:15:04.643713",
+ "modified": "2025-08-06 12:55:58.580909",
  "modified_by": "Administrator",
  "module": "Erpmco",
  "name": "Allocation",
