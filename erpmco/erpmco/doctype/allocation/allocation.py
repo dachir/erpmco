@@ -244,12 +244,12 @@ class Allocation(Document):
                         sre.item_code,
                         sre.voucher_no AS sales_order,
                         sre.voucher_detail_no AS sales_order_item,
-                        SUM(sre.reserved_qty) AS reserved_qty,
+                        SUM(sre.reserved_qty)  AS reserved_qty,
                         SUM(sre.custom_so_reserved_qty) AS custom_so_reserved_qty
                     FROM
                         `tabStock Reservation Entry` sre
                     WHERE
-                        sre.docstatus = 1
+                        sre.docstatus = 1 AND sre.status IN ('Reserved', 'Partially Reserved', 'Partially Delivered')
                         AND sre.voucher_type = 'Sales Order'
                     GROUP BY
                         sre.voucher_no, sre.voucher_detail_no, sre.item_code
@@ -512,37 +512,53 @@ def create_stock_reservation_entries(
 def get_item_totals(item_code, warehouse):
     from .allocation import get_warehouse_stock_map  # adapte le chemin
 
-    # Récupération du stock disponible
+    # 1️⃣ Récupération du facteur de conversion depuis Item → UOM Conversion Detail
+    conversion_factor = frappe.db.sql("""
+        SELECT COALESCE(ucd.conversion_factor, 1)
+        FROM `tabItem` i
+        LEFT JOIN `tabUOM Conversion Detail` ucd
+            ON ucd.parent = i.name
+            AND ucd.uom = COALESCE(i.sales_uom, i.stock_uom)
+        WHERE i.name = %s
+        LIMIT 1
+    """, (item_code,))[0][0] or 1
+
+    # 2️⃣ Récupération du stock disponible
     warehouse_stock_map = get_warehouse_stock_map(
         frappe._dict({"item_code": item_code, "warehouse": warehouse}), {}
     )
     total_stock = sum(warehouse_stock_map.values())
 
-    # Si pas de stock, pas besoin de continuer
     if not warehouse_stock_map:
         return {
             "total_stock": 0,
             "total_allocated": 0,
-            "remaining": 0
+            "remaining": 0,
+            "conversion_factor": conversion_factor
         }
 
     warehouses_list = list(warehouse_stock_map.keys())
     placeholders = ', '.join(['%s'] * len(warehouses_list))
 
-    # Quantité allouée
+    # 3️⃣ Quantité allouée (en stock UOM)
     total_allocated = frappe.db.sql(f"""
         SELECT COALESCE(SUM(reserved_qty - delivered_qty), 0)
         FROM `tabStock Reservation Entry`
         WHERE item_code = %s
-          AND warehouse IN ({placeholders})
-          AND status NOT IN ('Cancelled', 'Delivered')
-          AND docstatus = 1
+        AND warehouse IN ({placeholders})
+        AND status NOT IN ('Cancelled', 'Delivered')
+        AND docstatus = 1
     """, [item_code] + warehouses_list)[0][0] or 0
 
-    remaining = total_stock - total_allocated
+    # 4️⃣ Conversion en unité de vente
+    total_stock_uom = total_stock / conversion_factor
+    total_allocated_uom = total_allocated / conversion_factor
+    remaining_uom = total_stock_uom - total_allocated_uom
 
     return {
-        "total_stock": total_stock,
-        "total_allocated": total_allocated,
-        "remaining": remaining
+        "total_stock": total_stock_uom,
+        "total_allocated": total_allocated_uom,
+        "remaining": remaining_uom,
+        "conversion_factor": conversion_factor
     }
+

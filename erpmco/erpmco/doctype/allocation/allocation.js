@@ -149,6 +149,21 @@ frappe.ui.form.on('Allocation', {
                     });
                 });
         }
+        
+        // ==================== Bouton 📋 Populate Details ====================
+        frm.add_custom_button(__('📋 Populate Details'), () => {
+            frappe.call({
+                doc: frm.doc,
+                method: "populate_details",
+                freeze: true,
+                freeze_message: __("Populating..."),
+                callback: () => {
+                    frappe.show_alert({ message: __("📋 Details Updated"), indicator: "blue" }, 3);
+                    frm.refresh_field("details");
+                    updateHeaderTotalsFromServer(); // 🔹 mise à jour des totaux
+                }
+            });
+        }, __('Tools'));
 
         // ==================== Bouton 📦✅ Reserve All ====================
         frm.add_custom_button(__('✅ Reserve All'), () => {
@@ -202,21 +217,6 @@ frappe.ui.form.on('Allocation', {
             });
         }, __('Tools'));
 
-        // ==================== Bouton 📋 Populate Details ====================
-        frm.add_custom_button(__('📋 Populate Details'), () => {
-            frappe.call({
-                doc: frm.doc,
-                method: "populate_details",
-                freeze: true,
-                freeze_message: __("Populating..."),
-                callback: () => {
-                    frappe.show_alert({ message: __("📋 Details Updated"), indicator: "blue" }, 3);
-                    frm.refresh_field("details");
-                    updateHeaderTotalsFromServer(); // 🔹 mise à jour des totaux
-                }
-            });
-        }, __('Tools'));
-
         // ==================== Gestion visibilité Reserve/Unreserve ====================
         const toggle_buttons_visibility = () => {
             const selected_rows = frm.fields_dict.details.grid.get_selected();
@@ -238,7 +238,7 @@ frappe.ui.form.on('Allocation', {
 
 
 
-frappe.ui.form.on("Allocation", {
+/*frappe.ui.form.on("Allocation", {
     
     refresh(frm) {
         frm.add_custom_button(__('Populate Details'), function() {
@@ -254,7 +254,7 @@ frappe.ui.form.on("Allocation", {
             });
         },__('Tools'));
 
-        /*frm.add_custom_button(__('Reserve All'), function() {
+        frm.add_custom_button(__('Reserve All'), function() {
             frappe.call({
                 doc: frm.doc,
                 method: "reserve_all",
@@ -276,10 +276,10 @@ frappe.ui.form.on("Allocation", {
                     frm.reload_doc();
                 },
             });
-        },__('Tools'));*/
+        },__('Tools'));
     },
 
-});
+});*/
 
 frappe.ui.form.on("Allocation Detail", {
     qty_to_allocate: function(frm, cdt, cdn) {
