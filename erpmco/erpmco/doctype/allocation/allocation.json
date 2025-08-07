@@ -93,7 +93,8 @@
    "fieldname": "item",
    "fieldtype": "Link",
    "label": "Item",
-   "options": "Item"
+   "options": "Item",
+   "search_index": 1
   },
   {
    "default": "YY.ALL.MM.",
@@ -134,7 +135,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-08-06 12:55:58.580909",
+ "modified": "2025-08-07 18:18:26.436739",
  "modified_by": "Administrator",
  "module": "Erpmco",
  "name": "Allocation",
