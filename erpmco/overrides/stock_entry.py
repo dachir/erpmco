@@ -26,7 +26,7 @@ from erpnext.stock.doctype.stock_entry.stock_entry import StockEntry
 
 def create_allocation(doc, method):
     try:
-        parent_warehouse = frappe.db.get_value("Warehouse", doc.warehouse, "parent_warehouse")
+        parent_warehouse = frappe.db.get_value("Warehouse", doc.to_warehouse, "parent_warehouse")
         if doc.stock_entry_type == 'Material Transfert' and parent_warehouse == 'FG - MCO':
             if doc.branch == "Kinshasa":
                 """
