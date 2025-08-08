@@ -210,7 +210,7 @@ class Allocation(Document):
                     soi.qty AS qty_ordered,
                     soi.delivered_qty AS qty_delivered,
                     (soi.qty - IFNULL(dn_draft_qty.delivered_qty, 0) - soi.delivered_qty) AS qty_remaining,
-                    IFNULL(reserved_stock.custom_so_reserved_qty, 0) AS qty_allocated,
+                    IFNULL(reserved_stock.custom_so_reserved_qty, 0) - IFNULL(dn_draft_qty.delivered_qty, 0) AS qty_allocated, 
                     (soi.qty - IFNULL(dn_draft_qty.delivered_qty, 0) - soi.delivered_qty) * soi.conversion_factor AS pending_qty_mt,
                     CASE WHEN IFNULL(reserved_stock.reserved_qty, 0) = 0 THEN 0 ELSE
                     CASE WHEN IFNULL(reserved_stock.reserved_qty, 0) - (soi.qty - IFNULL(dn_draft_qty.delivered_qty, 0) - soi.delivered_qty) * soi.conversion_factor < 0 THEN 1 ELSE 2 END END as reserved_status,
