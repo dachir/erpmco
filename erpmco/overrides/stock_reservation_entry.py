@@ -9,7 +9,9 @@ from typing import Literal
 class CustomStockReservationEntry(StockReservationEntry):
     def before_submit(self) -> None:
         self.set_reservation_based_on()
-        self.validate_reservation_based_on_qty()
+        #self.validate_reservation_based_on_qty()
+        if self.reservation_based_on == "Qty":
+            self.validate_with_allowed_qty_2(self.reserved_qty)
         self.auto_reserve_serial_and_batch()
         #self.validate_reservation_based_on_serial_and_batch()
 
@@ -17,7 +19,9 @@ class CustomStockReservationEntry(StockReservationEntry):
         self.can_be_updated()
         self.validate_uom_is_integer()
         self.set_reservation_based_on()
-        self.validate_reservation_based_on_qty()
+        #self.validate_reservation_based_on_qty()
+        if self.reservation_based_on == "Qty":
+            self.validate_with_allowed_qty_2(self.reserved_qty)
         #self.validate_reservation_based_on_serial_and_batch()
         self.update_reserved_qty_in_voucher()
         self.update_status()
@@ -25,7 +29,7 @@ class CustomStockReservationEntry(StockReservationEntry):
         self.reload()
 
 
-    def validate_with_allowed_qty(self, qty_to_be_reserved: float) -> None:
+    def validate_with_allowed_qty_2(self, qty_to_be_reserved: float) -> None:
         """Validates `Reserved Qty` with `Max Reserved Qty`."""
 
         self.db_set(
