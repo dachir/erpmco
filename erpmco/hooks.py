@@ -182,9 +182,13 @@ doc_events = {
         "on_submit": "erpmco.overrides.sales_order.create_allocation",
     },
     "*": {
-        "submit": "erp_space.erpspace.ErpSpace.close_todos_on_submit",
+        "on_update": [
+            "erp_space.erpspace.ErpSpace.close_previous_state_todos_on_state_change",
+            "erp_space.erpspace.ErpSpace.close_todos_on_rejected",   # ⬅️ ici
+        ],
+        "on_submit": "erp_space.erpspace.ErpSpace.close_todos_on_submit",
     },
-    
+
 # 	"*": {
 # 		"on_update": "method",
 # 		"on_cancel": "method",
