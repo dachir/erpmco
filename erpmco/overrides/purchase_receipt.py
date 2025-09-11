@@ -10,6 +10,9 @@ from master_modules.master_modules.event_manager import EventManager
 class CustomPurchaseReceipt(PurchaseReceipt):
 
     def before_save(self):
+        if self.is_return:
+            return
+        
         # Define conditions for item groups
         group_5k = ['ENG', 'ENGSS', 'ENGCS']
         group_all = ['ITEQP', 'ADMFO', 'LABCH', 'OFF', 'STAT']

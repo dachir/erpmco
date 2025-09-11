@@ -33,6 +33,9 @@ def process_unreconciled_purchase_receipts():
         # Fetch the Purchase Receipt document
         pr_doc = frappe.get_doc("Purchase Receipt", receipt["name"])
 
+        if pr_doc.is_return:
+            return
+
         # Create a new Stock Reconciliation document
         sr = frappe.new_doc("Stock Reconciliation")
         sr.posting_date = pr_doc.posting_date
