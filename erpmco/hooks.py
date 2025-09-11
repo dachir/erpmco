@@ -184,6 +184,7 @@ doc_events = {
     "*": {
         "submit": "erp_space.erpspace.ErpSpace.close_todos_on_submit",
     },
+    
 # 	"*": {
 # 		"on_update": "method",
 # 		"on_cancel": "method",
