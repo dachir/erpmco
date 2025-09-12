@@ -184,7 +184,7 @@ doc_events = {
     "*": {
         "on_update": [
             "erpmco.utils.purchase_receipt.close_previous_state_todos_on_state_change",
-            "erpmco.utils.purchase_receipt.close_todos_on_rejected",   # ⬅️ ici
+            "erpmco.utils.purchase_receipt.close_todos_on_rejected",   
         ],
         "on_submit": "erpmco.utils.purchase_receipt.close_todos_on_submit",
     },
