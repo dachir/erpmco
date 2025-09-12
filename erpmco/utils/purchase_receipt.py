@@ -13,6 +13,10 @@ def close_previous_state_todos_on_state_change(doc, method):
 def close_todos_on_submit(doc, method):
     erpspace.close_todos_on_submit(doc, method)
 
+def on_workflow_action_on_update(doc, method):
+    erpspace.on_workflow_action_on_update(doc, method)
+
+
 
 def update_dossier(doc, method):
     # Create a new Dossier document with the purchase_order linked to the current doc's name
