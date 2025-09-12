@@ -150,32 +150,32 @@ override_doctype_class = {
 doc_events = {
     "Purchase Invoice": {
         "validate": "erpmco.utils.purchase_receipt.share_document",
-        "on_update": "erp_space.erpspace.ErpSpace.on_workflow_action_on_update",
+        "on_update": "erpmco.utils.purchase_receipt.on_workflow_action_on_update",
     },
     "Payment Request": {
         "validate": "erpmco.utils.purchase_receipt.share_document",
-        "on_update": "erp_space.erpspace.ErpSpace.on_workflow_action_on_update",
+        "on_update": "erpmco.utils.purchase_receipt.on_workflow_action_on_update",
     },
     "Purchase Receipt": {
         "validate": "erpmco.utils.purchase_receipt.share_document",
-        "on_update": "erp_space.erpspace.ErpSpace.on_workflow_action_on_update",
+        "on_update": "erpmco.utils.purchase_receipt.on_workflow_action_on_update",
     },
     "Material Request": {
         "validate": "erpmco.utils.purchase_receipt.share_document",
-        "on_update": "erp_space.erpspace.ErpSpace.on_workflow_action_on_update",
+        "on_update": "erpmco.utils.purchase_receipt.on_workflow_action_on_update",
     },
     "Purchase Order": {
         "validate": "erpmco.utils.purchase_receipt.share_document",
         "after_insert": "erpmco.utils.purchase_receipt.update_dossier",
-        "on_update": "erp_space.erpspace.ErpSpace.on_workflow_action_on_update",
+        "on_update": "erpmco.utils.purchase_receipt.on_workflow_action_on_update",
     },
     "Leave Application": {
         "validate": "erpmco.utils.purchase_receipt.share_document",
-        "on_update": "erp_space.erpspace.ErpSpace.on_workflow_action_on_update",
+        "on_update": "erpmco.utils.purchase_receipt.on_workflow_action_on_update",
     },
     "Stock Entry": {
         "validate": "erpmco.utils.purchase_receipt.share_document",
-        "on_update": "erp_space.erpspace.ErpSpace.on_workflow_action_on_update",
+        "on_update": "erpmco.utils.purchase_receipt.on_workflow_action_on_update",
         "on_submit": "erpmco.overrides.stock_entry.create_allocation",
     },
     "Sales Order": {
@@ -183,10 +183,10 @@ doc_events = {
     },
     "*": {
         "on_update": [
-            "erp_space.erpspace.ErpSpace.close_previous_state_todos_on_state_change",
-            "erp_space.erpspace.ErpSpace.close_todos_on_rejected",   # ⬅️ ici
+            "erpmco.utils.purchase_receipt.close_previous_state_todos_on_state_change",
+            "erpmco.utils.purchase_receipt.close_todos_on_rejected",   # ⬅️ ici
         ],
-        "on_submit": "erp_space.erpspace.ErpSpace.close_todos_on_submit",
+        "on_submit": "erpmco.utils.purchase_receipt.close_todos_on_submit",
     },
 
 # 	"*": {

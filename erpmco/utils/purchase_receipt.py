@@ -4,6 +4,15 @@ from erp_space import erpspace
 def share_document(doc, method):
     erpspace.share_doc(doc)
 
+def close_todos_on_rejected(doc, method):
+    erpspace.close_todos_on_rejected(doc, method)  
+
+def close_previous_state_todos_on_state_change(doc, method):
+    erpspace.close_previous_state_todos_on_state_change(doc, method)
+
+def close_todos_on_submit(doc, method):
+    erpspace.close_todos_on_submit(doc, method)
+
 
 def update_dossier(doc, method):
     # Create a new Dossier document with the purchase_order linked to the current doc's name
