@@ -159,6 +159,7 @@ doc_events = {
     "Purchase Receipt": {
         "validate": "erpmco.utils.purchase_receipt.share_document",
         "on_update": "erpmco.utils.purchase_receipt.on_workflow_action_on_update",
+        "on_submit": "erpmco.utils.purchase_receipt.on_submit_purchase_receipt"
     },
     "Material Request": {
         "validate": "erpmco.utils.purchase_receipt.share_document",
@@ -200,14 +201,11 @@ doc_events = {
 # ---------------
 
 scheduler_events = {
-    "cron": {
-        "*/1 * * * *": [
-            "erpmco.utils.purchase_receipt.process_unreconciled_purchase_receipts"
-        ],
-        #"*/10 * * * *": [
-        #    "erpmco.erpmco.doctype.allocation.allocation.process_shortages"
-        #],
-    },
+#    "cron": {
+#        "*/1 * * * *": [
+#            "erpmco.utils.purchase_receipt.process_unreconciled_purchase_receipts"
+#        ],
+#    },
 # 	"all": [
 # 		"erpmco.tasks.all"
 # 	],
