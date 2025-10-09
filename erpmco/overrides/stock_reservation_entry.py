@@ -31,7 +31,7 @@ class CustomStockReservationEntry(StockReservationEntry):
 
     def validate_with_allowed_qty_2(self, qty_to_be_reserved: float) -> None:
         """Validates `Reserved Qty` with `Max Reserved Qty`."""
-
+        #frappe.throw("Custom Validation")
         self.db_set(
             "available_qty",
             get_available_qty_to_reserve(self.item_code, self.warehouse, ignore_sre=self.name),
