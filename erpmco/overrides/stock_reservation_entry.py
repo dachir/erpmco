@@ -84,7 +84,7 @@ class CustomStockReservationEntry(StockReservationEntry):
                 actual_qty,
                 actual_qty - self.available_qty,
                 self.available_qty,
-                self.voucher_qty,
+                self.custom_so_voucher_qty,
                 voucher_delivered_qty,
                 total_reserved_qty,
                 allowed_qty,
