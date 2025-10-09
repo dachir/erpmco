@@ -67,8 +67,8 @@ class CustomStockReservationEntry(StockReservationEntry):
                 Cannot reserve more than Allowed Qty {} {} for Item {} against {} {}.<br /><br />
                 The <b>Allowed Qty</b> is calculated as follows:<br />
                 <ul>
-                    <li>Actual Qty [Available Qty at Warehouse] = {}</li>
-                    <li>Reserved Stock [Ignore current SRE] = {}</li>
+                    <li>Actual Qty [Available Qty at Warehouse]: = {}</li>
+                    <li>Reserved Stock [Ignore current SRE] : = {}</li>
                     <li>Available Qty To Reserve [Actual Qty - Reserved Stock] = {}</li>
                     <li>Voucher Qty [Voucher Item Qty] = {}</li>
                     <li>Delivered Qty [Qty delivered against the Voucher Item] = {}</li>

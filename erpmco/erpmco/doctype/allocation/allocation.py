@@ -284,6 +284,9 @@ class Allocation(Document):
         # Populate the child table
         self.details.clear()
         for so in sales_orders:
+            qa = max(flt(so["qty_allocated"]), 0)          # ← clamp once
+            qr = flt(so["qty_remaining"])
+            q_to_alloc = max(qr - qa, 0)
             self.append(
                 "details",
                 {
@@ -292,15 +295,15 @@ class Allocation(Document):
                     "item_code": so["item_code"],
                     "warehouse": so["warehouse"],
                     "qty_ordered": so["qty_ordered"],
-                    "qty_allocated": so["qty_allocated"],
+                    "qty_allocated": qa,
                     "qty_delivered": so["qty_delivered"],
-                    "shortage": max(so["qty_remaining"] - so["qty_allocated"], 0),
-                    "qty_to_allocate": max(so["qty_remaining"] - so["qty_allocated"], 0),
+                    "shortage": q_to_alloc,
+                    "qty_to_allocate": q_to_alloc,
                     "so_item": so["detail_name"],
                     "customer": so["customer"],
                     "branch": so["branch"],
                     "conversion_factor": so["conversion_factor"],
-                    "remaining_qty": so["qty_remaining"],
+                    "remaining_qty": qr,
                 },
             )
         self.save()
