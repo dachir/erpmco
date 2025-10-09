@@ -180,7 +180,7 @@ doc_events = {
         "on_submit": "erpmco.overrides.stock_entry.create_allocation",
     },
     "Stock Reservation Entry": {
-        "validate": "erpmco.overrides.stock_reservation_entry.validate_with_allowed_qty2",
+        "before_submit": "erpmco.overrides.stock_reservation_entry.before_submit",
     },
     "Sales Order": {
         "on_submit": "erpmco.overrides.sales_order.create_allocation",
