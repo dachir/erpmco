@@ -10,8 +10,8 @@ class CustomStockReservationEntry(StockReservationEntry):
     def before_submit(self) -> None:
         self.set_reservation_based_on()
         #self.validate_reservation_based_on_qty()
-        if self.reservation_based_on == "Qty":
-            self.validate_with_allowed_qty_2(self.reserved_qty)
+        
+        self.validate_with_allowed_qty_2(self.reserved_qty)
         self.auto_reserve_serial_and_batch()
         #self.validate_reservation_based_on_serial_and_batch()
 

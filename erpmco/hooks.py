@@ -321,6 +321,6 @@ scheduler_events = {
 # dans hooks.py
 app_include = [
     "erpmco.overrides.stock_entry.CustomStockEntry"
-    "erpmco.overrides.stock_reservation_entry.CustomStockReservationEntry"
+    
 ]
 
