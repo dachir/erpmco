@@ -179,6 +179,9 @@ doc_events = {
         "on_update": "erpmco.utils.purchase_receipt.on_workflow_action_on_update",
         "on_submit": "erpmco.overrides.stock_entry.create_allocation",
     },
+    "Stock Reservation Entry": {
+        "validate": "erpmco.overrides.stock_reservation_entry.validate_with_allowed_qty2",
+    },
     "Sales Order": {
         "on_submit": "erpmco.overrides.sales_order.create_allocation",
     },
