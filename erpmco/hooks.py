@@ -175,7 +175,9 @@ doc_events = {
         "on_update": "erpmco.utils.purchase_receipt.on_workflow_action_on_update",
     },
     "Stock Entry": {
-        "validate": "erpmco.utils.purchase_receipt.share_document",
+        "validate": [
+            "erpmco.utils.purchase_receipt.share_document",
+            "erpmco.utils.stock_entry_validation.validate_against_stock_ledger",],
         "on_update": "erpmco.utils.purchase_receipt.on_workflow_action_on_update",
         "on_submit": "erpmco.overrides.stock_entry.create_allocation",
     },
