@@ -50,6 +50,11 @@ import erpmco.overrides.stock_entry
 # doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}
 # doctype_calendar_js = {"doctype" : "public/js/doctype_calendar.js"}
 
+doctype_js = {
+    "Purchase Order": "public/js/purchase_order_item_360.js",
+}
+
+
 # Svg Icons
 # ------------------
 # include app icons in desk
