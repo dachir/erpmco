@@ -68,14 +68,17 @@ def get_item_360_for_po(
     cover_post = ((total_stock + open_po_qty) / avg_per_day) if avg_per_day else None
 
     # --- Purchases history + last purchase ---
-    purchases = _get_purchase_history(company, item_code, supplier, history_limit, effective_wh, branch_whs)
+    # IMPORTANT: price comparison should be against ANY supplier history (consistent with exception list)
+    supplier_for_price = None
+
+    purchases = _get_purchase_history(company, item_code, supplier_for_price, history_limit, effective_wh, branch_whs)
     last_purchase = purchases[0] if purchases else {}
 
     # --- Rate trends (3/6/12 months) ---
     trends = {
-        "m3": _get_rate_trend(company, item_code, supplier, months=3, warehouse=effective_wh, branch_whs=branch_whs),
-        "m6": _get_rate_trend(company, item_code, supplier, months=6, warehouse=effective_wh, branch_whs=branch_whs),
-        "m12": _get_rate_trend(company, item_code, supplier, months=12, warehouse=effective_wh, branch_whs=branch_whs),
+        "m3": _get_rate_trend(company, item_code, supplier_for_price, months=3, warehouse=effective_wh, branch_whs=branch_whs),
+        "m6": _get_rate_trend(company, item_code, supplier_for_price, months=6, warehouse=effective_wh, branch_whs=branch_whs),
+        "m12": _get_rate_trend(company, item_code, supplier_for_price, months=12, warehouse=effective_wh, branch_whs=branch_whs),
     }
 
     # --- Supplier-wise last rate ---
