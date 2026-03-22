@@ -50,10 +50,14 @@ import erpmco.overrides.stock_entry
 # doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}
 # doctype_calendar_js = {"doctype" : "public/js/doctype_calendar.js"}
 
+
 doctype_js = {
     "Purchase Order": "public/js/purchase_order_item_360.js",
+    "Material Request": [
+        "public/js/purchase_order_item_360.js",  # contains renderer
+        "public/js/material_request_overview.js",
+    ],
 }
-
 
 # Svg Icons
 # ------------------
